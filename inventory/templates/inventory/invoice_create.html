@@ -1,0 +1,293 @@
+{% extends 'base.html' %}
+{% block title %}New Invoice — BizManager{% endblock %}
+{% block page_title %}New Invoice{% endblock %}
+{% block page_subtitle %}Create a new sales invoice{% endblock %}
+
+{% block content %}
+
+<form method="post" id="invoice-form" onsubmit="return validateForm()">
+    {% csrf_token %}
+    <input type="hidden" id="total-item-count" name="total_item_count" value="0">
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- LEFT: Products -->
+        <div class="lg:col-span-2 space-y-5">
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-bold text-gray-800">
+                        <i class="fas fa-shopping-cart text-blue-500 mr-2"></i>Invoice Items
+                    </h2>
+                    <button type="button" id="add-item-btn"
+                            class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        <i class="fas fa-plus"></i> Add Item
+                    </button>
+                </div>
+
+                <div id="invoice-items-container"></div>
+
+                <div id="empty-items-msg" class="text-center py-10 text-gray-300 border-2 border-dashed border-gray-200 rounded-xl">
+                    <i class="fas fa-cart-plus text-4xl mb-3 block"></i>
+                    <p class="text-sm font-medium">Click "Add Item" to add products</p>
+                </div>
+            </div>
+
+            <!-- Invoice Info -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                <h2 class="text-lg font-bold text-gray-800 mb-4">
+                    <i class="fas fa-info-circle text-blue-500 mr-2"></i>Invoice Details
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Invoice Date *</label>
+                        <input type="date" name="date" value="{{ today|date:'Y-m-d' }}" class="form-input" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Notes (Optional)</label>
+                        <input type="text" name="notes" class="form-input" placeholder="Any special notes...">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="space-y-5">
+
+            <!-- Customer -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                <h2 class="text-base font-bold text-gray-800 mb-3">
+                    <i class="fas fa-user text-teal-500 mr-2"></i>Customer *
+                </h2>
+                <select id="customer-select" name="customer" class="form-input" required>
+                    <option value="">-- Select Customer --</option>
+                    {% for customer in customers %}
+                    <option value="{{ customer.id }}">{{ customer.name }}</option>
+                    {% endfor %}
+                </select>
+                <button type="button" onclick="quickAddCustomer()"
+                        class="mt-2 w-full text-sm text-teal-600 hover:text-teal-800 font-medium py-2 border border-dashed border-teal-300 rounded-lg hover:bg-teal-50 transition-colors">
+                    <i class="fas fa-plus mr-1"></i> New Customer (Quick Add)
+                </button>
+            </div>
+
+            <!-- Broker -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                <h2 class="text-base font-bold text-gray-800 mb-3">
+                    <i class="fas fa-handshake text-orange-500 mr-2"></i>Broker (Optional)
+                </h2>
+                <select id="broker-select" name="broker" class="form-input">
+                    <option value="">-- No Broker --</option>
+                    {% for broker in brokers %}
+                    <option value="{{ broker.id }}">{{ broker.name }}</option>
+                    {% endfor %}
+                </select>
+                <button type="button" onclick="quickAddBroker()"
+                        class="mt-2 w-full text-sm text-orange-500 hover:text-orange-700 font-medium py-2 border border-dashed border-orange-300 rounded-lg hover:bg-orange-50 transition-colors">
+                    <i class="fas fa-plus mr-1"></i> New Broker (Quick Add)
+                </button>
+            </div>
+
+            <!-- Bill Summary -->
+            <div class="bg-gradient-to-br from-blue-900 to-blue-700 rounded-2xl p-5 text-white sticky top-4">
+                <h2 class="text-base font-bold mb-4">
+                    <i class="fas fa-receipt mr-2"></i>Bill Summary
+                </h2>
+                <div class="space-y-2.5 text-sm">
+                    <div class="flex justify-between items-center">
+                        <span class="text-blue-200">Subtotal</span>
+                        <span id="summary-subtotal" class="font-semibold">Rs. 0</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-blue-200">Loading (Rs.10/bag)</span>
+                        <span id="summary-loading" class="font-semibold text-yellow-300">Rs. 0</span>
+                    </div>
+                    <div class="border-t border-blue-600 pt-2.5 flex justify-between items-center">
+                        <span class="font-bold text-lg">Grand Total</span>
+                        <span id="summary-grand" class="font-bold text-xl text-yellow-300">Rs. 0</span>
+                    </div>
+                </div>
+                <button type="submit"
+                        class="mt-5 w-full bg-white text-blue-800 hover:bg-blue-50 py-3 rounded-xl font-bold transition-colors text-base">
+                    <i class="fas fa-check-circle mr-2"></i>Confirm Invoice
+                </button>
+                <a href="{% url 'invoice_list' %}"
+                   class="mt-2 w-full block text-center text-blue-300 hover:text-white py-2 text-sm transition-colors">
+                    Cancel
+                </a>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// =============================================
+// ALL PRODUCT DATA — directly from Django
+// =============================================
+const PRODUCTS = [
+    {% for p in products %}
+    {
+        id: {{ p.id }},
+        name: "{{ p.name|escapejs }}",
+        unit: "{{ p.unit }}",
+        bag_weight_kg: {{ p.bag_weight_kg|default:"null" }}
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+];
+
+let itemCount = 0;
+
+function addItem() {
+    itemCount++;
+
+    const container = document.getElementById('invoice-items-container');
+    const emptyMsg = document.getElementById('empty-items-msg');
+    emptyMsg.style.display = 'none';
+
+    // Build product options
+    let options = '<option value="">-- Select Product --</option>';
+    PRODUCTS.forEach(p => {
+        options += `<option value="${p.id}" data-unit="${p.unit}">${p.name} (${p.unit === 'kg' ? 'KG' : 'Bag'})</option>`;
+    });
+
+    const row = document.createElement('div');
+    row.id = `item-row-${itemCount}`;
+    row.className = 'invoice-item-row fade-in';
+    row.innerHTML = `
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-sm font-semibold text-gray-500">
+                <i class="fas fa-grip-vertical mr-1 text-gray-300"></i>Item #${itemCount}
+            </span>
+            <button type="button" onclick="removeItemRow(${itemCount})"
+                    class="text-red-400 hover:text-red-600 text-sm transition-colors">
+                <i class="fas fa-trash mr-1"></i>Remove
+            </button>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="md:col-span-1">
+                <label class="text-xs text-gray-500 font-medium mb-1 block">Product *</label>
+                <select name="product_${itemCount}" id="product-sel-${itemCount}"
+                        class="form-input"
+                        onchange="onProductChange(${itemCount})" required>
+                    ${options}
+                </select>
+            </div>
+            <div>
+                <label class="text-xs text-gray-500 font-medium mb-1 block" id="qty-label-${itemCount}">Quantity *</label>
+                <input type="number" name="quantity_${itemCount}" id="qty-${itemCount}"
+                       class="form-input" placeholder="0" step="0.01" min="0.01"
+                       oninput="calcRow(${itemCount})" required>
+            </div>
+            <div>
+                <label class="text-xs text-gray-500 font-medium mb-1 block" id="price-label-${itemCount}">Price/Unit (Rs.) *</label>
+                <input type="number" name="price_${itemCount}" id="price-${itemCount}"
+                       class="form-input" placeholder="0.00" step="0.01" min="0"
+                       oninput="calcRow(${itemCount})" required>
+            </div>
+            <div>
+                <label class="text-xs text-gray-500 font-medium mb-1 block">Line Total</label>
+                <input type="text" id="linetotal-${itemCount}"
+                       class="form-input bg-blue-50 font-bold text-blue-700 cursor-default" readonly value="Rs. 0.00">
+                <p class="text-xs text-orange-500 mt-1 font-medium min-h-[16px]" id="loading-note-${itemCount}"></p>
+            </div>
+        </div>
+    `;
+
+    container.appendChild(row);
+    updateTotalCount();
+}
+
+function onProductChange(idx) {
+    const sel = document.getElementById(`product-sel-${idx}`);
+    const unit = sel.options[sel.selectedIndex]?.dataset?.unit || 'kg';
+    document.getElementById(`qty-label-${idx}`).textContent = unit === 'kg' ? 'Quantity (KG) *' : 'Quantity (Bags) *';
+    document.getElementById(`price-label-${idx}`).textContent = unit === 'kg' ? 'Price per KG (Rs.) *' : 'Price per Bag (Rs.) *';
+    calcRow(idx);
+}
+
+function calcRow(idx) {
+    const qty = parseFloat(document.getElementById(`qty-${idx}`)?.value) || 0;
+    const price = parseFloat(document.getElementById(`price-${idx}`)?.value) || 0;
+    const sel = document.getElementById(`product-sel-${idx}`);
+    const unit = sel?.options[sel.selectedIndex]?.dataset?.unit || 'kg';
+
+    const lineTotal = qty * price;
+    document.getElementById(`linetotal-${idx}`).value = `Rs. ${lineTotal.toFixed(2)}`;
+
+    const loadingNote = document.getElementById(`loading-note-${idx}`);
+    if (unit === 'bag' && qty > 0) {
+        loadingNote.textContent = `+ Rs. ${(qty * 10).toFixed(0)} loading`;
+    } else {
+        loadingNote.textContent = '';
+    }
+
+    calcGrandTotal();
+}
+
+function calcGrandTotal() {
+    let subtotal = 0;
+    let loading = 0;
+
+    for (let i = 1; i <= itemCount; i++) {
+        const row = document.getElementById(`item-row-${i}`);
+        if (!row) continue;
+        const qty = parseFloat(document.getElementById(`qty-${i}`)?.value) || 0;
+        const price = parseFloat(document.getElementById(`price-${i}`)?.value) || 0;
+        const sel = document.getElementById(`product-sel-${i}`);
+        const unit = sel?.options[sel.selectedIndex]?.dataset?.unit || 'kg';
+
+        subtotal += qty * price;
+        if (unit === 'bag') loading += qty * 10;
+    }
+
+    document.getElementById('summary-subtotal').textContent = `Rs. ${subtotal.toFixed(0)}`;
+    document.getElementById('summary-loading').textContent = `Rs. ${loading.toFixed(0)}`;
+    document.getElementById('summary-grand').textContent = `Rs. ${(subtotal + loading).toFixed(0)}`;
+}
+
+function removeItemRow(idx) {
+    const row = document.getElementById(`item-row-${idx}`);
+    if (row) {
+        row.style.opacity = '0';
+        row.style.transition = 'opacity 0.2s';
+        setTimeout(() => {
+            row.remove();
+            calcGrandTotal();
+            updateTotalCount();
+            // Show empty msg if no items
+            if (document.getElementById('invoice-items-container').children.length === 0) {
+                document.getElementById('empty-items-msg').style.display = '';
+            }
+        }, 200);
+    }
+}
+
+function updateTotalCount() {
+    document.getElementById('total-item-count').value = itemCount;
+}
+
+function validateForm() {
+    const count = document.getElementById('invoice-items-container').children.length;
+    if (count === 0) {
+        alert('Please add at least one product item!');
+        return false;
+    }
+    const customer = document.getElementById('customer-select').value;
+    if (!customer) {
+        alert('Please select a customer!');
+        return false;
+    }
+    updateTotalCount();
+    return true;
+}
+
+// Attach button
+document.getElementById('add-item-btn').addEventListener('click', addItem);
+
+// Auto-add first item
+addItem();
+</script>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} Product — BizManager{% endblock %}
+{% block page_title %}{{ action }} Product{% endblock %}
+{% block page_subtitle %}{% if action == 'Add' %}Add a new product{% else %}Edit product details{% endif %}{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+
+        <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 card-gradient-blue rounded-xl flex items-center justify-center">
+                <i class="fas fa-box text-white"></i>
+            </div>
+            <div>
+                <h2 class="text-lg font-bold text-gray-800">{{ action }} Product</h2>
+                <p class="text-sm text-gray-500">Fill in the product details below</p>
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="space-y-5">
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Product Name *</label>
+                    <input type="text" name="name" value="{{ product.name|default:'' }}"
+                           class="form-input" placeholder="e.g. Wheat, Rice, Sugar..." required>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Selling Unit *</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="unit" value="kg"
+                                   {% if not product or product.unit == 'kg' %}checked{% endif %}
+                                   class="peer sr-only" onchange="toggleBagWeight(false)">
+                            <div class="border-2 border-gray-200 peer-checked:border-blue-500 peer-checked:bg-blue-50 rounded-xl p-4 text-center transition-all">
+                                <i class="fas fa-weight text-2xl text-gray-400 peer-checked:text-blue-500 mb-2 block"></i>
+                                <span class="font-semibold text-gray-700">Kilogram (KG)</span>
+                                <p class="text-xs text-gray-400 mt-1">Price per kg</p>
+                            </div>
+                        </label>
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="unit" value="bag"
+                                   {% if product.unit == 'bag' %}checked{% endif %}
+                                   class="peer sr-only" onchange="toggleBagWeight(true)">
+                            <div class="border-2 border-gray-200 peer-checked:border-orange-500 peer-checked:bg-orange-50 rounded-xl p-4 text-center transition-all">
+                                <i class="fas fa-shopping-bag text-2xl text-gray-400 mb-2 block"></i>
+                                <span class="font-semibold text-gray-700">Bag</span>
+                                <p class="text-xs text-gray-400 mt-1">Price per bag</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="bag-weight-field" {% if not product or product.unit != 'bag' %}style="display:none"{% endif %}>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Bag Weight (KG)</label>
+                    <input type="number" name="bag_weight_kg" value="{{ product.bag_weight_kg|default:'' }}"
+                           class="form-input" placeholder="e.g. 40" step="0.01" min="0">
+                    <p class="text-xs text-gray-400 mt-1">How many KG does one bag contain?</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Description (Optional)</label>
+                    <textarea name="description" rows="2" class="form-input"
+                              placeholder="Any extra notes about this product...">{{ product.description|default:'' }}</textarea>
+                </div>
+
+                {% if action == 'Edit' %}
+                <div class="flex items-center gap-3">
+                    <input type="checkbox" name="is_active" id="is_active"
+                           {% if product.is_active %}checked{% endif %}
+                           class="w-4 h-4 text-blue-600 rounded">
+                    <label for="is_active" class="text-sm font-medium text-gray-700">Active (visible in invoices)</label>
+                </div>
+                {% endif %}
+
+                <div class="flex gap-3 pt-2">
+                    <button type="submit"
+                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition-colors">
+                        <i class="fas fa-save mr-2"></i>{{ action }} Product
+                    </button>
+                    <a href="{% url 'product_list' %}"
+                       class="px-6 py-3 border border-gray-300 rounded-xl text-gray-600 hover:bg-gray-50 font-medium transition-colors">
+                        Cancel
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleBagWeight(show) {
+        document.getElementById('bag-weight-field').style.display = show ? 'block' : 'none';
+    }
+</script>
+{% endblock %}

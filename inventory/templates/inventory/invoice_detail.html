@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% block title %}Invoice {{ invoice.invoice_number }} — BizManager{% endblock %}
+{% block page_title %}Invoice Detail{% endblock %}
+{% block page_subtitle %}{{ invoice.invoice_number }}{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Main Invoice -->
+    <div class="lg:col-span-2 space-y-5">
+
+        <!-- Invoice Header -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-start justify-between mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-blue-700">{{ invoice.invoice_number }}</h2>
+                    <p class="text-gray-500 text-sm mt-1">Date: {{ invoice.date|date:"d M Y" }}</p>
+                </div>
+                <div class="text-right">
+                    <span class="badge text-base px-4 py-1
+                        {% if invoice.payment_status == 'paid' %}badge-paid
+                        {% elif invoice.payment_status == 'partial' %}badge-partial
+                        {% else %}badge-unpaid{% endif %}">
+                        {{ invoice.get_payment_status_display }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-6 p-4 bg-gray-50 rounded-xl">
+                <div>
+                    <p class="text-xs text-gray-400 uppercase font-semibold mb-1">Customer</p>
+                    <p class="font-bold text-gray-800 text-lg">{{ invoice.customer.name }}</p>
+                    {% if invoice.customer.phone %}
+                    <p class="text-gray-500 text-sm">{{ invoice.customer.phone }}</p>
+                    {% endif %}
+                </div>
+                {% if invoice.broker %}
+                <div>
+                    <p class="text-xs text-gray-400 uppercase font-semibold mb-1">Broker</p>
+                    <p class="font-bold text-gray-800">{{ invoice.broker.name }}</p>
+                    {% if invoice.broker.phone %}
+                    <p class="text-gray-500 text-sm">{{ invoice.broker.phone }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Items Table -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100">
+                <h3 class="font-bold text-gray-800"><i class="fas fa-list text-blue-500 mr-2"></i>Products</h3>
+            </div>
+            <table class="w-full data-table">
+                <thead>
+                    <tr>
+                        <th class="text-left">Product</th>
+                        <th class="text-center">Unit</th>
+                        <th class="text-right">Qty</th>
+                        <th class="text-right">Price/Unit</th>
+                        <th class="text-right">Loading</th>
+                        <th class="text-right">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td class="font-semibold text-gray-800">{{ item.product.name }}</td>
+                        <td class="text-center">
+                            <span class="badge {% if item.product.unit == 'kg' %}badge-kg{% else %}badge-bag{% endif %}">
+                                {{ item.product.get_unit_display }}
+                            </span>
+                        </td>
+                        <td class="text-right">{{ item.quantity }}</td>
+                        <td class="text-right">Rs. {{ item.price_per_unit|floatformat:2 }}</td>
+                        <td class="text-right text-orange-500">
+                            {% if item.product.unit == 'bag' %}
+                            Rs. {{ item.loading_charge|floatformat:0 }}
+                            {% else %}—{% endif %}
+                        </td>
+                        <td class="text-right font-bold text-gray-800">Rs. {{ item.line_total|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="bg-gray-50">
+                    <tr>
+                        <td colspan="5" class="text-right font-medium text-gray-600 py-3 px-4">Subtotal</td>
+                        <td class="text-right font-bold py-3 px-4">Rs. {{ invoice.subtotal|floatformat:2 }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="5" class="text-right font-medium text-orange-500 py-1 px-4">Loading Charges</td>
+                        <td class="text-right font-bold text-orange-500 py-1 px-4">Rs. {{ invoice.loading_charges|floatformat:2 }}</td>
+                    </tr>
+                    <tr class="border-t-2 border-blue-200">
+                        <td colspan="5" class="text-right font-bold text-blue-800 text-lg py-3 px-4">Grand Total</td>
+                        <td class="text-right font-bold text-blue-800 text-lg py-3 px-4">Rs. {{ invoice.grand_total|floatformat:2 }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- Payment History -->
+        {% if payments %}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100">
+                <h3 class="font-bold text-gray-800"><i class="fas fa-history text-green-500 mr-2"></i>Payment History</h3>
+            </div>
+            <table class="w-full data-table">
+                <thead>
+                    <tr>
+                        <th class="text-left">Date</th>
+                        <th class="text-right">Amount</th>
+                        <th class="text-left">Note</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                    <tr>
+                        <td>{{ payment.date|date:"d M Y" }}</td>
+                        <td class="text-right font-semibold text-green-600">Rs. {{ payment.amount|floatformat:0 }}</td>
+                        <td class="text-gray-500">{{ payment.note|default:"—" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right Side: Actions & Summary -->
+    <div class="space-y-5">
+
+        <!-- Payment Summary Card -->
+        <div class="bg-gradient-to-br from-blue-900 to-blue-700 rounded-2xl p-5 text-white">
+            <h3 class="font-bold text-lg mb-4"><i class="fas fa-wallet mr-2"></i>Payment Summary</h3>
+            <div class="space-y-3 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-blue-200">Grand Total</span>
+                    <span class="font-bold">Rs. {{ invoice.grand_total|floatformat:0 }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-blue-200">Amount Paid</span>
+                    <span class="font-bold text-green-300">Rs. {{ invoice.amount_paid|floatformat:0 }}</span>
+                </div>
+                <div class="border-t border-blue-600 pt-3 flex justify-between text-base">
+                    <span class="font-bold">Balance Due</span>
+                    <span class="font-bold {% if invoice.balance_due > 0 %}text-red-300{% else %}text-green-300{% endif %}">
+                        Rs. {{ invoice.balance_due|floatformat:0 }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-3">
+            <h3 class="font-bold text-gray-800 mb-3">Actions</h3>
+            {% if invoice.payment_status != 'paid' %}
+            <a href="{% url 'payment_add' invoice.pk %}"
+               class="flex items-center justify-center gap-2 w-full bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-xl font-medium transition-colors">
+                <i class="fas fa-money-bill-wave"></i> Add Payment
+            </a>
+            {% endif %}
+            <button onclick="window.print()"
+                    class="flex items-center justify-center gap-2 w-full bg-blue-100 hover:bg-blue-200 text-blue-700 py-2.5 rounded-xl font-medium transition-colors no-print">
+                <i class="fas fa-print"></i> Print Invoice
+            </button>
+            <a href="{% url 'invoice_pdf' invoice.pk %}"
+               class="flex items-center justify-center gap-2 w-full bg-red-100 hover:bg-red-200 text-red-700 py-2.5 rounded-xl font-medium transition-colors no-print">
+                <i class="fas fa-file-pdf"></i> Download PDF
+            </a>
+            <a href="{% url 'invoice_list' %}"
+               class="flex items-center justify-center gap-2 w-full border border-gray-300 text-gray-600 hover:bg-gray-50 py-2.5 rounded-xl font-medium transition-colors">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}Reports — BizManager{% endblock %}
+{% block page_title %}Reports{% endblock %}
+{% block page_subtitle %}Business analytics and insights{% endblock %}
+
+{% block content %}
+
+<!-- Period Filter -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6">
+    <div class="flex flex-wrap gap-2">
+        <a href="?period=daily" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if period == 'daily' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600{% endif %}">Today</a>
+        <a href="?period=weekly" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if period == 'weekly' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600{% endif %}">Weekly</a>
+        <a href="?period=15days" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if period == '15days' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600{% endif %}">15 Days</a>
+        <a href="?period=monthly" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if period == 'monthly' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600{% endif %}">Monthly</a>
+        <a href="?period=6months" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if period == '6months' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600{% endif %}">6 Months</a>
+        <a href="?period=yearly" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if period == 'yearly' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600{% endif %}">Yearly</a>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="card-gradient-blue rounded-2xl p-4 text-white">
+        <p class="text-blue-200 text-xs font-medium">Total Revenue</p>
+        <p class="text-xl font-bold mt-1">Rs. {{ total_revenue|floatformat:0 }}</p>
+    </div>
+    <div class="card-gradient-green rounded-2xl p-4 text-white">
+        <p class="text-green-100 text-xs font-medium">Collected</p>
+        <p class="text-xl font-bold mt-1">Rs. {{ total_collected|floatformat:0 }}</p>
+    </div>
+    <div class="card-gradient-red rounded-2xl p-4 text-white">
+        <p class="text-red-100 text-xs font-medium">Pending</p>
+        <p class="text-xl font-bold mt-1">Rs. {{ total_pending|floatformat:0 }}</p>
+    </div>
+    <div class="card-gradient-purple rounded-2xl p-4 text-white">
+        <p class="text-purple-100 text-xs font-medium">Total Invoices</p>
+        <p class="text-xl font-bold mt-1">{{ total_invoices }}</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Product Report -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100">
+        <div class="px-5 py-4 border-b border-gray-100">
+            <h3 class="font-bold text-gray-800"><i class="fas fa-box text-blue-500 mr-2"></i>Product-wise</h3>
+        </div>
+        {% if product_report %}
+        <div class="divide-y divide-gray-50">
+            {% for name, data in product_report.items %}
+            <div class="px-5 py-3 flex items-center justify-between">
+                <div>
+                    <p class="font-semibold text-gray-800 text-sm">{{ name }}</p>
+                    <p class="text-xs text-gray-400">{{ data.qty|floatformat:0 }} {{ data.unit }}</p>
+                </div>
+                <p class="font-bold text-blue-700 text-sm">Rs. {{ data.total|floatformat:0 }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-center py-8 text-gray-400 text-sm">No data for this period</p>
+        {% endif %}
+    </div>
+
+    <!-- Customer Report -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100">
+        <div class="px-5 py-4 border-b border-gray-100">
+            <h3 class="font-bold text-gray-800"><i class="fas fa-users text-teal-500 mr-2"></i>Customer-wise</h3>
+        </div>
+        {% if customer_report %}
+        <div class="divide-y divide-gray-50">
+            {% for name, data in customer_report.items %}
+            <div class="px-5 py-3">
+                <div class="flex items-center justify-between">
+                    <p class="font-semibold text-gray-800 text-sm">{{ name }}</p>
+                    <p class="font-bold text-blue-700 text-sm">Rs. {{ data.total|floatformat:0 }}</p>
+                </div>
+                <div class="flex items-center justify-between mt-1">
+                    <p class="text-xs text-gray-400">{{ data.invoices }} invoice(s)</p>
+                    <p class="text-xs text-green-600">Paid: Rs. {{ data.paid|floatformat:0 }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-center py-8 text-gray-400 text-sm">No data for this period</p>
+        {% endif %}
+    </div>
+
+    <!-- Broker Report -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100">
+        <div class="px-5 py-4 border-b border-gray-100">
+            <h3 class="font-bold text-gray-800"><i class="fas fa-handshake text-orange-500 mr-2"></i>Broker-wise</h3>
+        </div>
+        {% if broker_report %}
+        <div class="divide-y divide-gray-50">
+            {% for name, data in broker_report.items %}
+            <div class="px-5 py-3 flex items-center justify-between">
+                <div>
+                    <p class="font-semibold text-gray-800 text-sm">{{ name }}</p>
+                    <p class="text-xs text-gray-400">{{ data.invoices }} invoice(s)</p>
+                </div>
+                <p class="font-bold text-orange-600 text-sm">Rs. {{ data.total|floatformat:0 }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-center py-8 text-gray-400 text-sm">No broker data for this period</p>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

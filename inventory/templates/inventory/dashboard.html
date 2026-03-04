@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard — BizManager{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Welcome back, {{ request.user.username }}!{% endblock %}
+
+{% block content %}
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+
+    <!-- Total Sales -->
+    <div class="card-gradient-blue rounded-2xl p-5 text-white shadow-lg hover:shadow-xl transition-shadow">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-11 h-11 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                <i class="fas fa-chart-line text-xl"></i>
+            </div>
+            <span class="text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full">All Time</span>
+        </div>
+        <p class="text-blue-100 text-sm font-medium">Total Sales</p>
+        <p class="text-2xl font-bold mt-1">Rs. {{ total_sales|floatformat:0 }}</p>
+    </div>
+
+    <!-- Monthly Sales -->
+    <div class="card-gradient-green rounded-2xl p-5 text-white shadow-lg hover:shadow-xl transition-shadow">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-11 h-11 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                <i class="fas fa-calendar-alt text-xl"></i>
+            </div>
+            <span class="text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full">This Month</span>
+        </div>
+        <p class="text-green-100 text-sm font-medium">Monthly Sales</p>
+        <p class="text-2xl font-bold mt-1">Rs. {{ monthly_sales|floatformat:0 }}</p>
+    </div>
+
+    <!-- Amount Due -->
+    <div class="card-gradient-red rounded-2xl p-5 text-white shadow-lg hover:shadow-xl transition-shadow">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-11 h-11 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                <i class="fas fa-exclamation-circle text-xl"></i>
+            </div>
+            <span class="text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full">Pending</span>
+        </div>
+        <p class="text-red-100 text-sm font-medium">Amount Due</p>
+        <p class="text-2xl font-bold mt-1">Rs. {{ total_due|floatformat:0 }}</p>
+    </div>
+
+    <!-- Today's Invoices -->
+    <div class="card-gradient-purple rounded-2xl p-5 text-white shadow-lg hover:shadow-xl transition-shadow">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-11 h-11 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                <i class="fas fa-file-invoice text-xl"></i>
+            </div>
+            <span class="text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full">Today</span>
+        </div>
+        <p class="text-purple-100 text-sm font-medium">Today's Invoices</p>
+        <p class="text-2xl font-bold mt-1">{{ today_invoices }}</p>
+    </div>
+
+</div>
+
+<!-- Second Row Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+
+    <div class="card-gradient-teal rounded-2xl p-5 text-white shadow-lg">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                <i class="fas fa-users text-2xl"></i>
+            </div>
+            <div>
+                <p class="text-teal-100 text-sm">Total Customers</p>
+                <p class="text-3xl font-bold">{{ total_customers }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-gradient-orange rounded-2xl p-5 text-white shadow-lg">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                <i class="fas fa-box text-2xl"></i>
+            </div>
+            <div>
+                <p class="text-orange-100 text-sm">Total Products</p>
+                <p class="text-3xl font-bold">{{ total_products }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-gradient-to-br from-pink-600 to-rose-500 rounded-2xl p-5 text-white shadow-lg">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                <i class="fas fa-handshake text-2xl"></i>
+            </div>
+            <div>
+                <p class="text-pink-100 text-sm">Total Brokers</p>
+                <p class="text-3xl font-bold">{{ total_brokers }}</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Recent Invoices Table -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 fade-in">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <h2 class="text-lg font-bold text-gray-800">
+            <i class="fas fa-clock text-blue-500 mr-2"></i>Recent Invoices
+        </h2>
+        <a href="{% url 'invoice_list' %}"
+           class="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1">
+            View All <i class="fas fa-arrow-right text-xs"></i>
+        </a>
+    </div>
+
+    {% if recent_invoices %}
+    <div class="overflow-x-auto">
+        <table class="w-full data-table">
+            <thead>
+                <tr>
+                    <th class="text-left">Invoice #</th>
+                    <th class="text-left">Customer</th>
+                    <th class="text-left">Date</th>
+                    <th class="text-right">Amount</th>
+                    <th class="text-center">Payment</th>
+                    <th class="text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for invoice in recent_invoices %}
+                <tr>
+                    <td class="font-semibold text-blue-600">{{ invoice.invoice_number }}</td>
+                    <td>
+                        <div class="flex items-center gap-2">
+                            <div class="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-xs font-bold">
+                                {{ invoice.customer.name|first|upper }}
+                            </div>
+                            {{ invoice.customer.name }}
+                        </div>
+                    </td>
+                    <td class="text-gray-500">{{ invoice.date|date:"d M Y" }}</td>
+                    <td class="text-right font-semibold">Rs. {{ invoice.grand_total|floatformat:0 }}</td>
+                    <td class="text-center">
+                        <span class="badge
+                            {% if invoice.payment_status == 'paid' %}badge-paid
+                            {% elif invoice.payment_status == 'partial' %}badge-partial
+                            {% else %}badge-unpaid{% endif %}">
+                            {{ invoice.get_payment_status_display }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <a href="{% url 'invoice_detail' invoice.pk %}"
+                           class="text-blue-500 hover:text-blue-700 text-sm font-medium">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-12 text-gray-400">
+        <i class="fas fa-file-invoice text-5xl mb-3 opacity-30"></i>
+        <p class="text-lg font-medium">No invoices yet</p>
+        <p class="text-sm mt-1">Create your first invoice to get started</p>
+        <a href="{% url 'invoice_create' %}"
+           class="inline-flex items-center gap-2 mt-4 bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+            <i class="fas fa-plus"></i> New Invoice
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

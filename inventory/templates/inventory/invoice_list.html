@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block title %}Invoices — BizManager{% endblock %}
+{% block page_title %}Sales Invoices{% endblock %}
+{% block page_subtitle %}View and manage all invoices{% endblock %}
+
+{% block content %}
+
+<!-- Filters -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-5">
+    <form method="get" class="flex flex-wrap gap-3 items-end">
+        <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Payment Status</label>
+            <select name="payment_status" class="form-input text-sm py-2">
+                <option value="">All</option>
+                <option value="paid" {% if selected_payment_status == 'paid' %}selected{% endif %}>Paid</option>
+                <option value="partial" {% if selected_payment_status == 'partial' %}selected{% endif %}>Partial</option>
+                <option value="unpaid" {% if selected_payment_status == 'unpaid' %}selected{% endif %}>Unpaid</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Customer</label>
+            <select name="customer" class="form-input text-sm py-2">
+                <option value="">All Customers</option>
+                {% for c in customers %}
+                <option value="{{ c.id }}" {% if selected_customer == c.id|stringformat:'s' %}selected{% endif %}>{{ c.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">From Date</label>
+            <input type="date" name="date_from" class="form-input text-sm py-2">
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">To Date</label>
+            <input type="date" name="date_to" class="form-input text-sm py-2">
+        </div>
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+            <i class="fas fa-filter mr-1"></i> Filter
+        </button>
+        <a href="{% url 'invoice_list' %}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
+            Reset
+        </a>
+    </form>
+</div>
+
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <h2 class="text-lg font-bold text-gray-800">
+            <i class="fas fa-file-invoice text-blue-500 mr-2"></i>All Invoices
+            <span class="ml-2 text-sm font-normal text-gray-400">({{ invoices.count }} total)</span>
+        </h2>
+        <a href="{% url 'invoice_create' %}"
+           class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-plus"></i> New Invoice
+        </a>
+    </div>
+
+    {% if invoices %}
+    <div class="overflow-x-auto">
+        <table class="w-full data-table">
+            <thead>
+                <tr>
+                    <th class="text-left">Invoice #</th>
+                    <th class="text-left">Customer</th>
+                    <th class="text-left">Broker</th>
+                    <th class="text-left">Date</th>
+                    <th class="text-right">Total</th>
+                    <th class="text-right">Paid</th>
+                    <th class="text-right">Balance</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for invoice in invoices %}
+                <tr>
+                    <td class="font-semibold text-blue-600">{{ invoice.invoice_number }}</td>
+                    <td>{{ invoice.customer.name }}</td>
+                    <td class="text-gray-500">{{ invoice.broker.name|default:"—" }}</td>
+                    <td class="text-gray-500">{{ invoice.date|date:"d M Y" }}</td>
+                    <td class="text-right font-semibold">Rs. {{ invoice.grand_total|floatformat:0 }}</td>
+                    <td class="text-right text-green-600 font-medium">Rs. {{ invoice.amount_paid|floatformat:0 }}</td>
+                    <td class="text-right {% if invoice.balance_due > 0 %}text-red-600{% else %}text-green-600{% endif %} font-medium">
+                        Rs. {{ invoice.balance_due|floatformat:0 }}
+                    </td>
+                    <td class="text-center">
+                        <span class="badge {% if invoice.payment_status == 'paid' %}badge-paid{% elif invoice.payment_status == 'partial' %}badge-partial{% else %}badge-unpaid{% endif %}">
+                            {{ invoice.get_payment_status_display }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <a href="{% url 'invoice_detail' invoice.pk %}" class="text-blue-500 hover:text-blue-700 text-sm">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            {% if invoice.payment_status != 'paid' %}
+                            <a href="{% url 'payment_add' invoice.pk %}" class="text-green-500 hover:text-green-700 text-sm">
+                                <i class="fas fa-money-bill"></i>
+                            </a>
+                            {% endif %}
+                            <form method="post" action="{% url 'invoice_delete' invoice.pk %}" onsubmit="return confirmDelete('Delete invoice {{ invoice.invoice_number }}?')">
+                                {% csrf_token %}
+                                <button type="submit" class="text-red-400 hover:text-red-600 text-sm">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-16 text-gray-400">
+        <i class="fas fa-file-invoice text-5xl mb-4 opacity-30"></i>
+        <p class="text-lg font-medium">No invoices found</p>
+        <a href="{% url 'invoice_create' %}"
+           class="inline-flex items-center gap-2 mt-4 bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700">
+            <i class="fas fa-plus"></i> Create Invoice
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} Broker — BizManager{% endblock %}
+{% block page_title %}{{ action }} Broker{% endblock %}
+{% block page_subtitle %}{% if action == 'Add' %}Add a new broker{% else %}Edit broker details{% endif %}{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 card-gradient-orange rounded-xl flex items-center justify-center">
+                <i class="fas fa-handshake text-white"></i>
+            </div>
+            <div>
+                <h2 class="text-lg font-bold text-gray-800">{{ action }} Broker</h2>
+                <p class="text-sm text-gray-500">Fill in the broker details below</p>
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Broker Name *</label>
+                    <input type="text" name="name" value="{{ broker.name|default:'' }}"
+                           class="form-input" placeholder="Full name" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Phone Number</label>
+                    <input type="text" name="phone" value="{{ broker.phone|default:'' }}"
+                           class="form-input" placeholder="03xx-xxxxxxx">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Address</label>
+                    <textarea name="address" rows="2" class="form-input"
+                              placeholder="Broker address...">{{ broker.address|default:'' }}</textarea>
+                </div>
+                {% if action == 'Edit' %}
+                <div class="flex items-center gap-3">
+                    <input type="checkbox" name="is_active" id="is_active"
+                           {% if broker.is_active %}checked{% endif %}
+                           class="w-4 h-4 text-blue-600 rounded">
+                    <label for="is_active" class="text-sm font-medium text-gray-700">Active</label>
+                </div>
+                {% endif %}
+                <div class="flex gap-3 pt-2">
+                    <button type="submit"
+                            class="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-semibold transition-colors">
+                        <i class="fas fa-save mr-2"></i>{{ action }} Broker
+                    </button>
+                    <a href="{% url 'broker_list' %}"
+                       class="px-6 py-3 border border-gray-300 rounded-xl text-gray-600 hover:bg-gray-50 font-medium">
+                        Cancel
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

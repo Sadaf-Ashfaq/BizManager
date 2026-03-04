@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}Products — BizManager{% endblock %}
+{% block page_title %}Products{% endblock %}
+{% block page_subtitle %}Manage your product catalog{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100">
+
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <h2 class="text-lg font-bold text-gray-800">
+            <i class="fas fa-box text-blue-500 mr-2"></i>All Products
+            <span class="ml-2 text-sm font-normal text-gray-400">({{ products.count }} total)</span>
+        </h2>
+        <a href="{% url 'product_create' %}"
+           class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-plus"></i> Add Product
+        </a>
+    </div>
+
+    {% if products %}
+    <div class="overflow-x-auto">
+        <table class="w-full data-table">
+            <thead>
+                <tr>
+                    <th class="text-left">#</th>
+                    <th class="text-left">Product Name</th>
+                    <th class="text-center">Unit</th>
+                    <th class="text-center">Bag Weight</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td class="text-gray-400 text-sm">{{ forloop.counter }}</td>
+                    <td>
+                        <div class="font-semibold text-gray-800">{{ product.name }}</div>
+                        {% if product.description %}
+                        <div class="text-xs text-gray-400 mt-0.5">{{ product.description|truncatechars:40 }}</div>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <span class="badge {% if product.unit == 'kg' %}badge-kg{% else %}badge-bag{% endif %}">
+                            {{ product.get_unit_display }}
+                        </span>
+                    </td>
+                    <td class="text-center text-sm text-gray-600">
+                        {% if product.unit == 'bag' and product.bag_weight_kg %}
+                            {{ product.bag_weight_kg }} kg/bag
+                        {% else %}
+                            <span class="text-gray-300">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if product.is_active %}
+                        <span class="badge badge-paid">Active</span>
+                        {% else %}
+                        <span class="badge badge-unpaid">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <div class="flex items-center justify-center gap-3">
+                            <a href="{% url 'product_edit' product.pk %}"
+                               class="text-blue-500 hover:text-blue-700 text-sm font-medium">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form method="post" action="{% url 'product_delete' product.pk %}" onsubmit="return confirmDelete('Delete product {{ product.name }}?')">
+                                {% csrf_token %}
+                                <button type="submit" class="text-red-400 hover:text-red-600 text-sm">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-16 text-gray-400">
+        <i class="fas fa-box-open text-5xl mb-4 opacity-30"></i>
+        <p class="text-lg font-medium">No products added yet</p>
+        <a href="{% url 'product_create' %}"
+           class="inline-flex items-center gap-2 mt-4 bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700">
+            <i class="fas fa-plus"></i> Add First Product
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

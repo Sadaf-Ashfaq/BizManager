@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}Customers — BizManager{% endblock %}
+{% block page_title %}Customers{% endblock %}
+{% block page_subtitle %}Manage your customer database{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <h2 class="text-lg font-bold text-gray-800">
+            <i class="fas fa-users text-blue-500 mr-2"></i>All Customers
+            <span class="ml-2 text-sm font-normal text-gray-400">({{ customers.count }} total)</span>
+        </h2>
+        <a href="{% url 'customer_create' %}"
+           class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-plus"></i> Add Customer
+        </a>
+    </div>
+
+    {% if customers %}
+    <div class="overflow-x-auto">
+        <table class="w-full data-table">
+            <thead>
+                <tr>
+                    <th class="text-left">#</th>
+                    <th class="text-left">Name</th>
+                    <th class="text-left">Phone</th>
+                    <th class="text-right">Total Purchases</th>
+                    <th class="text-right">Outstanding</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for customer in customers %}
+                <tr>
+                    <td class="text-gray-400 text-sm">{{ forloop.counter }}</td>
+                    <td>
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 card-gradient-blue rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                {{ customer.name|first|upper }}
+                            </div>
+                            <span class="font-semibold text-gray-800">{{ customer.name }}</span>
+                        </div>
+                    </td>
+                    <td class="text-gray-500">{{ customer.phone|default:"—" }}</td>
+                    <td class="text-right font-semibold text-gray-800">Rs. {{ customer.total_purchases|floatformat:0 }}</td>
+                    <td class="text-right">
+                        {% with balance=customer.outstanding_balance %}
+                        <span class="font-semibold {% if balance > 0 %}text-red-600{% else %}text-green-600{% endif %}">
+                            Rs. {{ balance|floatformat:0 }}
+                        </span>
+                        {% endwith %}
+                    </td>
+                    <td class="text-center">
+                        {% if customer.is_active %}
+                        <span class="badge badge-paid">Active</span>
+                        {% else %}
+                        <span class="badge badge-unpaid">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <div class="flex items-center justify-center gap-3">
+                            <a href="{% url 'customer_edit' customer.pk %}" class="text-blue-500 hover:text-blue-700">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form method="post" action="{% url 'customer_delete' customer.pk %}" onsubmit="return confirmDelete('Delete customer {{ customer.name }}?')">
+                                {% csrf_token %}
+                                <button type="submit" class="text-red-400 hover:text-red-600">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-16 text-gray-400">
+        <i class="fas fa-users text-5xl mb-4 opacity-30"></i>
+        <p class="text-lg font-medium">No customers yet</p>
+        <a href="{% url 'customer_create' %}"
+           class="inline-flex items-center gap-2 mt-4 bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700">
+            <i class="fas fa-plus"></i> Add First Customer
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

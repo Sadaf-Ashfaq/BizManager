@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}Stock — BizManager{% endblock %}
+{% block page_title %}Stock Overview{% endblock %}
+{% block page_subtitle %}Track product inventory{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <h2 class="text-lg font-bold text-gray-800">
+            <i class="fas fa-warehouse text-blue-500 mr-2"></i>Stock Overview
+        </h2>
+        <a href="{% url 'stock_add' %}"
+           class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-plus"></i> Add Stock
+        </a>
+    </div>
+    {% if stock_data %}
+    <div class="overflow-x-auto">
+        <table class="w-full data-table">
+            <thead>
+                <tr>
+                    <th class="text-left">Product</th>
+                    <th class="text-center">Unit</th>
+                    <th class="text-right">Total In</th>
+                    <th class="text-right">Total Sold</th>
+                    <th class="text-right">Remaining</th>
+                    <th class="text-center">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in stock_data %}
+                <tr>
+                    <td class="font-semibold text-gray-800">{{ row.product.name }}</td>
+                    <td class="text-center">
+                        <span class="badge {% if row.product.unit == 'kg' %}badge-kg{% else %}badge-bag{% endif %}">
+                            {{ row.product.get_unit_display }}
+                        </span>
+                    </td>
+                    <td class="text-right text-blue-600 font-medium">{{ row.total_in|floatformat:0 }}</td>
+                    <td class="text-right text-orange-500 font-medium">{{ row.total_sold|floatformat:0 }}</td>
+                    <td class="text-right font-bold {% if row.remaining <= 0 %}text-red-600{% elif row.remaining < 100 %}text-yellow-600{% else %}text-green-600{% endif %}">
+                        {{ row.remaining|floatformat:0 }}
+                    </td>
+                    <td class="text-center">
+                        {% if row.remaining <= 0 %}
+                        <span class="badge badge-unpaid">Out of Stock</span>
+                        {% elif row.remaining < 100 %}
+                        <span class="badge badge-partial">Low Stock</span>
+                        {% else %}
+                        <span class="badge badge-paid">In Stock</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-16 text-gray-400">
+        <i class="fas fa-warehouse text-5xl mb-4 opacity-30"></i>
+        <p class="text-lg font-medium">No stock data yet</p>
+        <a href="{% url 'stock_add' %}" class="inline-flex items-center gap-2 mt-4 bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700">
+            <i class="fas fa-plus"></i> Add Stock Entry
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

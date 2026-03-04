@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Business Management System{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50:  '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="bg-gray-100 font-sans">
+
+<div class="flex h-screen overflow-hidden">
+
+    <!-- ===== LEFT SIDEBAR ===== -->
+    <aside id="sidebar" class="w-64 bg-primary-900 text-white flex flex-col flex-shrink-0 transition-all duration-300">
+
+        <!-- Logo / Brand -->
+        <div class="flex items-center justify-between px-5 py-5 border-b border-primary-700">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-blue-400 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-store text-white text-lg"></i>
+                </div>
+                <span class="text-lg font-bold tracking-wide">BizManager</span>
+            </div>
+            <button onclick="toggleSidebar()" class="text-primary-300 hover:text-white lg:hidden">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+
+            <!-- Dashboard -->
+            <a href="{% url 'dashboard' %}"
+               class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-primary-200 hover:bg-primary-700 hover:text-white transition-all {% if request.resolver_match.url_name == 'dashboard' %}bg-primary-700 text-white{% endif %}">
+                <i class="fas fa-chart-pie w-5 text-center"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <!-- Products -->
+            <div class="nav-group">
+                <button onclick="toggleGroup('products-menu')"
+                        class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-primary-200 hover:bg-primary-700 hover:text-white transition-all {% if 'product' in request.resolver_match.url_name %}bg-primary-700 text-white{% endif %}">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-box w-5 text-center"></i>
+                        <span>Products</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs transition-transform" id="products-menu-arrow"></i>
+                </button>
+                <div id="products-menu" class="ml-8 mt-1 space-y-1 {% if 'product' not in request.resolver_match.url_name %}hidden{% endif %}">
+                    <a href="{% url 'product_list' %}" class="sub-link block px-3 py-2 rounded-lg text-primary-300 hover:text-white hover:bg-primary-600 text-sm transition-all">
+                        <i class="fas fa-list mr-2"></i>All Products
+                    </a>
+                    <a href="{% url 'product_create' %}" class="sub-link block px-3 py-2 rounded-lg text-primary-300 hover:text-white hover:bg-primary-600 text-sm transition-all">
+                        <i class="fas fa-plus mr-2"></i>Add Product
+                    </a>
+                </div>
+            </div>
+
+            <!-- Customers -->
+            <div class="nav-group">
+                <button onclick="toggleGroup('customers-menu')"
+                        class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-primary-200 hover:bg-primary-700 hover:text-white transition-all {% if 'customer' in request.resolver_match.url_name %}bg-primary-700 text-white{% endif %}">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-users w-5 text-center"></i>
+                        <span>Customers</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs transition-transform" id="customers-menu-arrow"></i>
+                </button>
+                <div id="customers-menu" class="ml-8 mt-1 space-y-1 {% if 'customer' not in request.resolver_match.url_name %}hidden{% endif %}">
+                    <a href="{% url 'customer_list' %}" class="sub-link block px-3 py-2 rounded-lg text-primary-300 hover:text-white hover:bg-primary-600 text-sm transition-all">
+                        <i class="fas fa-list mr-2"></i>All Customers
+                    </a>
+                    <a href="{% url 'customer_create' %}" class="sub-link block px-3 py-2 rounded-lg text-primary-300 hover:text-white hover:bg-primary-600 text-sm transition-all">
+                        <i class="fas fa-plus mr-2"></i>Add Customer
+                    </a>
+                </div>
+            </div>
+
+            <!-- Brokers -->
+            <div class="nav-group">
+                <button onclick="toggleGroup('brokers-menu')"
+                        class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-primary-200 hover:bg-primary-700 hover:text-white transition-all {% if 'broker' in request.resolver_match.url_name %}bg-primary-700 text-white{% endif %}">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-handshake w-5 text-center"></i>
+                        <span>Brokers</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs transition-transform" id="brokers-menu-arrow"></i>
+                </button>
+                <div id="brokers-menu" class="ml-8 mt-1 space-y-1 {% if 'broker' not in request.resolver_match.url_name %}hidden{% endif %}">
+                    <a href="{% url 'broker_list' %}" class="sub-link block px-3 py-2 rounded-lg text-primary-300 hover:text-white hover:bg-primary-600 text-sm transition-all">
+                        <i class="fas fa-list mr-2"></i>All Brokers
+                    </a>
+                    <a href="{% url 'broker_create' %}" class="sub-link block px-3 py-2 rounded-lg text-primary-300 hover:text-white hover:bg-primary-600 text-sm transition-all">
+                        <i class="fas fa-plus mr-2"></i>Add Broker
+                    </a>
+                </div>
+            </div>
+
+            <!-- Sales / Invoices -->
+            <div class="nav-group">
+                <button onclick="toggleGroup('sales-menu')"
+                        class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-primary-200 hover:bg-primary-700 hover:text-white transition-all {% if 'invoice' in request.resolver_match.url_name %}bg-primary-700 text-white{% endif %}">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-file-invoice w-5 text-center"></i>
+                        <span>Sales</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs transition-transform" id="sales-menu-arrow"></i>
+                </button>
+                <div id="sales-menu" class="ml-8 mt-1 space-y-1 {% if 'invoice' not in request.resolver_match.url_name %}hidden{% endif %}">
+                    <a href="{% url 'invoice_list' %}" class="sub-link block px-3 py-2 rounded-lg text-primary-300 hover:text-white hover:bg-primary-600 text-sm transition-all">
+                        <i class="fas fa-list mr-2"></i>All Invoices
+                    </a>
+                    <a href="{% url 'invoice_create' %}" class="sub-link block px-3 py-2 rounded-lg text-primary-300 hover:text-white hover:bg-primary-600 text-sm transition-all">
+                        <i class="fas fa-plus mr-2"></i>New Invoice
+                    </a>
+                </div>
+            </div>
+
+            <!-- Payments -->
+            <a href="{% url 'payment_list' %}"
+               class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-primary-200 hover:bg-primary-700 hover:text-white transition-all {% if 'payment' in request.resolver_match.url_name %}bg-primary-700 text-white{% endif %}">
+                <i class="fas fa-money-bill-wave w-5 text-center"></i>
+                <span>Payments</span>
+            </a>
+
+            <!-- Stock -->
+            <div class="nav-group">
+                <button onclick="toggleGroup('stock-menu')"
+                        class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-primary-200 hover:bg-primary-700 hover:text-white transition-all {% if 'stock' in request.resolver_match.url_name %}bg-primary-700 text-white{% endif %}">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-warehouse w-5 text-center"></i>
+                        <span>Stock</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-xs transition-transform" id="stock-menu-arrow"></i>
+                </button>
+                <div id="stock-menu" class="ml-8 mt-1 space-y-1 {% if 'stock' not in request.resolver_match.url_name %}hidden{% endif %}">
+                    <a href="{% url 'stock_list' %}" class="sub-link block px-3 py-2 rounded-lg text-primary-300 hover:text-white hover:bg-primary-600 text-sm transition-all">
+                        <i class="fas fa-list mr-2"></i>Stock Overview
+                    </a>
+                    <a href="{% url 'stock_add' %}" class="sub-link block px-3 py-2 rounded-lg text-primary-300 hover:text-white hover:bg-primary-600 text-sm transition-all">
+                        <i class="fas fa-plus mr-2"></i>Add Stock
+                    </a>
+                </div>
+            </div>
+
+            <!-- Reports -->
+            <a href="{% url 'reports' %}"
+               class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-primary-200 hover:bg-primary-700 hover:text-white transition-all {% if 'report' in request.resolver_match.url_name %}bg-primary-700 text-white{% endif %}">
+                <i class="fas fa-chart-bar w-5 text-center"></i>
+                <span>Reports</span>
+            </a>
+
+        </nav>
+
+        <!-- User Info at Bottom -->
+        <div class="border-t border-primary-700 px-4 py-4">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-blue-500 rounded-full flex items-center justify-center text-sm font-bold">
+                    {{ request.user.username|first|upper }}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-white truncate">{{ request.user.username }}</p>
+                    <p class="text-xs text-primary-400">Administrator</p>
+                </div>
+                <a href="{% url 'logout' %}" class="text-primary-400 hover:text-red-400 transition-colors" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </div>
+
+    </aside>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+
+        <!-- Top Header Bar -->
+        <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="text-gray-500 hover:text-primary-600 transition-colors">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                <div>
+                    <h1 class="text-xl font-bold text-gray-800">{% block page_title %}Dashboard{% endblock %}</h1>
+                    <p class="text-xs text-gray-500">{% block page_subtitle %}Welcome back!{% endblock %}</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <!-- Quick New Invoice Button -->
+                <a href="{% url 'invoice_create' %}"
+                   class="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    <i class="fas fa-plus"></i>
+                    <span class="hidden sm:inline">New Invoice</span>
+                </a>
+                <!-- Current Date -->
+                <div class="hidden md:flex items-center gap-2 text-gray-600 text-sm bg-gray-100 px-3 py-2 rounded-lg">
+                    <i class="fas fa-calendar text-primary-500"></i>
+                    <span id="current-date"></span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Flash Messages -->
+        {% if messages %}
+        <div class="px-6 pt-4 space-y-2">
+            {% for message in messages %}
+            <div class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium
+                {% if message.tags == 'success' %}bg-green-100 text-green-800 border border-green-200
+                {% elif message.tags == 'error' %}bg-red-100 text-red-800 border border-red-200
+                {% elif message.tags == 'warning' %}bg-yellow-100 text-yellow-800 border border-yellow-200
+                {% else %}bg-blue-100 text-blue-800 border border-blue-200{% endif %}">
+                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %}"></i>
+                {{ message }}
+                <button onclick="this.parentElement.remove()" class="ml-auto text-current opacity-60 hover:opacity-100">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Page Content -->
+        <main class="flex-1 overflow-y-auto p-6">
+            {% block content %}{% endblock %}
+        </main>
+
+    </div>
+</div>
+
+<!-- Modal Container (for quick add modals) -->
+<div id="modal-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div id="modal-content" class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-screen overflow-y-auto">
+    </div>
+</div>
+
+{% load static %}
+<script src="{% static 'js/main.js' %}"></script>
+<script>
+    // Current date display
+    document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-PK', {
+        weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+    });
+
+    // Sidebar toggle
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('hidden');
+    }
+
+    // Dropdown groups
+    function toggleGroup(menuId) {
+        const menu = document.getElementById(menuId);
+        const arrow = document.getElementById(menuId + '-arrow');
+        menu.classList.toggle('hidden');
+        if (arrow) arrow.classList.toggle('rotate-180');
+    }
+
+    // Auto-open active group
+    document.querySelectorAll('.nav-group').forEach(group => {
+        const subLinks = group.querySelectorAll('.sub-link');
+        subLinks.forEach(link => {
+            if (link.href === window.location.href) {
+                const menu = group.querySelector('[id$="-menu"]');
+                const arrow = group.querySelector('[id$="-menu-arrow"]');
+                if (menu) menu.classList.remove('hidden');
+                if (arrow) arrow.classList.add('rotate-180');
+            }
+        });
+    });
+
+    // Modal functions
+    function openModal(content) {
+        document.getElementById('modal-content').innerHTML = content;
+        document.getElementById('modal-overlay').classList.remove('hidden');
+    }
+    function closeModal() {
+        document.getElementById('modal-overlay').classList.add('hidden');
+        document.getElementById('modal-content').innerHTML = '';
+    }
+    document.getElementById('modal-overlay').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

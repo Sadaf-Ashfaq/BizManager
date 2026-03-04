@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% block title %}Add Payment — BizManager{% endblock %}
+{% block page_title %}Add Payment{% endblock %}
+{% block page_subtitle %}Invoice {{ invoice.invoice_number }}{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+
+        <!-- Invoice Summary Bar -->
+        <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
+            <p class="text-xs text-blue-500 font-semibold uppercase mb-2">{{ invoice.invoice_number }} — {{ invoice.customer.name }}</p>
+            <div class="grid grid-cols-3 gap-3 text-center">
+                <div>
+                    <p class="text-gray-400 text-xs">Grand Total</p>
+                    <p class="font-bold text-gray-800 text-base">Rs. {{ invoice.grand_total|floatformat:0 }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs">Already Paid</p>
+                    <p class="font-bold text-green-600 text-base">Rs. {{ invoice.amount_paid|floatformat:0 }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs">Balance Due</p>
+                    <p class="font-bold text-red-600 text-base">Rs. {{ invoice.balance_due|floatformat:0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="space-y-5">
+
+                <!-- Amount Input -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Payment Amount (Rs.) *</label>
+                    <input type="number" name="amount" id="payment-amount"
+                           class="calc-input" placeholder="0"
+                           step="0.01" min="1"
+                           oninput="updateBalance()" required>
+
+                    <!-- Quick amount buttons -->
+                    <div class="grid grid-cols-6 gap-1.5 mt-2">
+                        <button type="button" onclick="setAmount(500)"
+                                class="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 py-2 rounded-lg font-semibold transition-colors">500</button>
+                        <button type="button" onclick="setAmount(1000)"
+                                class="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 py-2 rounded-lg font-semibold transition-colors">1K</button>
+                        <button type="button" onclick="setAmount(2000)"
+                                class="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 py-2 rounded-lg font-semibold transition-colors">2K</button>
+                        <button type="button" onclick="setAmount(5000)"
+                                class="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 py-2 rounded-lg font-semibold transition-colors">5K</button>
+                        <button type="button" onclick="setAmount(10000)"
+                                class="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 py-2 rounded-lg font-semibold transition-colors">10K</button>
+                        <button type="button" onclick="setFullPayment()"
+                                class="text-xs bg-green-100 text-green-700 hover:bg-green-200 py-2 rounded-lg font-bold transition-colors">Full</button>
+                    </div>
+                </div>
+
+                <!-- Remaining Balance Live Preview -->
+                <div class="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-xl px-5 py-3">
+                    <div>
+                        <p class="text-xs text-gray-400">Remaining After This Payment</p>
+                        <span id="remaining-balance" class="text-xl font-bold text-red-500">
+                            Rs. {{ invoice.balance_due|floatformat:0 }}
+                        </span>
+                    </div>
+                    <div id="payment-status-indicator" class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                        <i class="fas fa-minus text-gray-400"></i>
+                    </div>
+                </div>
+
+                <!-- Date -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Payment Date</label>
+                    <input type="date" name="date" value="{{ today|date:'Y-m-d' }}" class="form-input">
+                </div>
+
+                <!-- Note -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Note (Optional)</label>
+                    <input type="text" name="note" class="form-input" placeholder="e.g. Cash, Bank transfer, Cheque...">
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                    <button type="submit"
+                            class="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-bold transition-colors text-base">
+                        <i class="fas fa-check mr-2"></i>Record Payment
+                    </button>
+                    <a href="{% url 'invoice_detail' invoice.pk %}"
+                       class="px-5 py-3 border border-gray-300 rounded-xl text-gray-600 hover:bg-gray-50 font-medium">
+                        Cancel
+                    </a>
+                </div>
+
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Pass balance due to JS -->
+<div id="invoice-grand-total" data-total="{{ invoice.balance_due }}" style="display:none"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function setAmount(val) {
+        document.getElementById('payment-amount').value = val;
+        updateBalance();
+    }
+
+    function updateBalance() {
+        const totalEl = document.getElementById('invoice-grand-total');
+        const input = document.getElementById('payment-amount');
+        const balanceEl = document.getElementById('remaining-balance');
+        const indicator = document.getElementById('payment-status-indicator');
+
+        const total = parseFloat(totalEl.dataset.total) || 0;
+        const paid = parseFloat(input.value) || 0;
+        const remaining = Math.max(0, total - paid);
+
+        balanceEl.textContent = 'Rs. ' + remaining.toLocaleString('en-PK', {maximumFractionDigits: 0});
+
+        if (paid >= total && paid > 0) {
+            balanceEl.className = 'text-xl font-bold text-green-600';
+            indicator.className = 'w-10 h-10 rounded-full bg-green-100 flex items-center justify-center';
+            indicator.innerHTML = '<i class="fas fa-check text-green-600"></i>';
+        } else if (paid > 0) {
+            balanceEl.className = 'text-xl font-bold text-yellow-600';
+            indicator.className = 'w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center';
+            indicator.innerHTML = '<i class="fas fa-minus text-yellow-600"></i>';
+        } else {
+            balanceEl.className = 'text-xl font-bold text-red-500';
+            indicator.className = 'w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center';
+            indicator.innerHTML = '<i class="fas fa-minus text-gray-400"></i>';
+        }
+    }
+
+    function setFullPayment() {
+        const totalEl = document.getElementById('invoice-grand-total');
+        document.getElementById('payment-amount').value = totalEl.dataset.total;
+        updateBalance();
+    }
+</script>
+{% endblock %}
