@@ -8,6 +8,7 @@ Django-based ERP system for wholesale businesses with role-based portals for Adm
 - PDF Generation: ReportLab
 
 3. Features
+
 a. Admin Portal
 - Manage Products (KG / Bag units)
 - Manage Customers & Brokers
