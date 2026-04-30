@@ -9,27 +9,27 @@ Django-based ERP system for wholesale businesses with role-based portals for Adm
 
 3. Features
 
-a. Admin Portal
-- Manage Products (KG / Bag units)
-- Manage Customers & Brokers
-- Create Invoices with live preview
-- Auto loading charge: Rs. 10/bag
-- Payment tracking: Paid / Partial / Unpaid
-- Stock auto-deduct on invoice confirmation
-- PDF invoice download
-- Reports: Daily / Weekly / Monthly / Yearly
-- Broker commission auto-calculation
-
-b. Customer Portal
-- View own invoices and payment history
-- See outstanding balance
-- Edit profile & change password
-
-c. Broker Portal
-- View linked sales
-- Track commission (Pending / Paid)
-- View customers handled
-- Edit profile & change password
+      a. Admin Portal
+      - Manage Products (KG / Bag units)
+      - Manage Customers & Brokers
+      - Create Invoices with live preview
+      - Auto loading charge: Rs. 10/bag
+      - Payment tracking: Paid / Partial / Unpaid
+      - Stock auto-deduct on invoice confirmation
+      - PDF invoice download
+      - Reports: Daily / Weekly / Monthly / Yearly
+      - Broker commission auto-calculation
+      
+      b. Customer Portal
+      - View own invoices and payment history
+      - See outstanding balance
+      - Edit profile & change password
+      
+      c. Broker Portal
+      - View linked sales
+      - Track commission (Pending / Paid)
+      - View customers handled
+      - Edit profile & change password
 
 4. Access URLs
 - Admin Login → `/login/` then redirects to `/` (Admin Dashboard)
