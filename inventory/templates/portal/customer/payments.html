@@ -1,0 +1,77 @@
+{% extends 'portal/base.html' %}
+{% block title %}My Payments — BizManager{% endblock %}
+{% block sidebar_bg %}bg-teal-900{% endblock %}
+{% block logo_bg %}bg-teal-500{% endblock %}
+{% block logo_icon %}fa-user{% endblock %}
+{% block portal_name %}Customer Portal{% endblock %}
+{% block avatar_bg %}bg-teal-600{% endblock %}
+{% block user_display_name %}{{ customer.name }}{% endblock %}
+{% block user_role_label %}Customer{% endblock %}
+
+{% block nav_links %}
+<a href="{% url 'customer_portal_dashboard' %}" class="portal-nav-link">
+    <i class="fas fa-chart-pie w-5"></i> Dashboard
+</a>
+<a href="{% url 'customer_portal_invoices' %}" class="portal-nav-link">
+    <i class="fas fa-file-invoice w-5"></i> My Invoices
+</a>
+<a href="{% url 'customer_portal_payments' %}" class="portal-nav-link active">
+    <i class="fas fa-money-bill-wave w-5"></i> My Payments
+</a>
+<a href="{% url 'customer_portal_outstanding' %}" class="portal-nav-link">
+    <i class="fas fa-exclamation-circle w-5"></i> Outstanding
+</a>
+<a href="{% url 'customer_portal_profile' %}" class="portal-nav-link">
+    <i class="fas fa-user-cog w-5"></i> My Profile
+</a>
+{% endblock %}
+
+{% block page_title %}My Payments{% endblock %}
+{% block page_subtitle %}Complete payment history{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-5 inline-flex items-center gap-4">
+    <i class="fas fa-check-circle text-green-500 text-2xl"></i>
+    <div>
+        <p class="text-xs text-gray-400">Total Amount Paid</p>
+        <p class="text-2xl font-bold text-green-700">Rs. {{ total_paid|floatformat:0 }}</p>
+    </div>
+</div>
+
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100">
+    {% if payments %}
+    <div class="overflow-x-auto">
+        <table class="w-full data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Invoice #</th>
+                    <th class="text-right">Amount Paid</th>
+                    <th>Note</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in payments %}
+                <tr>
+                    <td class="text-gray-500 text-sm">{{ p.date|date:"d M Y" }}</td>
+                    <td>
+                        <a href="{% url 'customer_portal_invoice_detail' p.invoice.pk %}"
+                           class="font-semibold text-teal-600 hover:text-teal-800">
+                            {{ p.invoice.invoice_number }}
+                        </a>
+                    </td>
+                    <td class="text-right font-bold text-green-600">Rs. {{ p.amount|floatformat:0 }}</td>
+                    <td class="text-gray-400 text-sm">{{ p.note|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-16 text-gray-300">
+        <i class="fas fa-money-bill text-5xl mb-4 block"></i>
+        <p>No payments recorded yet</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

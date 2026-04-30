@@ -1,0 +1,105 @@
+{% extends 'portal/base.html' %}
+{% block title %}Broker Dashboard — BizManager{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Welcome, {{ broker.name }}!{% endblock %}
+
+{% block content %}
+
+<!-- Stats Row 1 -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+    <div class="card-gradient-orange rounded-2xl p-4 text-white">
+        <i class="fas fa-file-invoice text-2xl opacity-80 mb-2 block"></i>
+        <p class="text-xs opacity-75">Total Invoices</p>
+        <p class="text-2xl font-bold">{{ total_invoices }}</p>
+    </div>
+    <div class="card-gradient-blue rounded-2xl p-4 text-white">
+        <i class="fas fa-chart-line text-2xl opacity-80 mb-2 block"></i>
+        <p class="text-xs opacity-75">Total Sales</p>
+        <p class="text-xl font-bold">Rs. {{ total_sales|floatformat:0 }}</p>
+    </div>
+    <div class="card-gradient-teal rounded-2xl p-4 text-white">
+        <i class="fas fa-users text-2xl opacity-80 mb-2 block"></i>
+        <p class="text-xs opacity-75">Customers Handled</p>
+        <p class="text-2xl font-bold">{{ total_customers }}</p>
+    </div>
+    <div class="card-gradient-purple rounded-2xl p-4 text-white">
+        <i class="fas fa-coins text-2xl opacity-80 mb-2 block"></i>
+        <p class="text-xs opacity-75">Commission Rate</p>
+        <p class="text-2xl font-bold">{{ broker.commission_rate }}%</p>
+    </div>
+</div>
+
+<!-- Commission Summary Row -->
+<div class="grid grid-cols-3 gap-4 mb-6">
+    <div class="bg-white rounded-2xl border border-gray-100 p-4 text-center">
+        <p class="text-xs text-gray-400 mb-1">Total Earned</p>
+        <p class="text-xl font-bold text-gray-800">Rs. {{ commission_earned|floatformat:0 }}</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-green-200 p-4 text-center">
+        <p class="text-xs text-gray-400 mb-1">Commission Paid</p>
+        <p class="text-xl font-bold text-green-600">Rs. {{ commission_paid|floatformat:0 }}</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-red-200 p-4 text-center">
+        <p class="text-xs text-gray-400 mb-1">Pending Commission</p>
+        <p class="text-xl font-bold text-red-600">Rs. {{ commission_pending|floatformat:0 }}</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    <!-- Customer Breakdown -->
+    {% if customer_breakdown %}
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+            <h3 class="font-bold text-gray-800 text-sm"><i class="fas fa-users text-orange-500 mr-2"></i>Customer-wise Sales</h3>
+            <a href="{% url 'broker_portal_customers' %}" class="text-orange-500 text-xs font-medium">View All →</a>
+        </div>
+        <div class="divide-y divide-gray-50">
+            {% for name, data in customer_breakdown.items %}
+            <div class="flex items-center justify-between px-5 py-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-7 h-7 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 text-xs font-bold">
+                        {{ name|first|upper }}
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-800 text-sm">{{ name }}</p>
+                        <p class="text-xs text-gray-400">{{ data.invoices }} invoice(s)</p>
+                    </div>
+                </div>
+                <p class="font-bold text-orange-600 text-sm">Rs. {{ data.total|floatformat:0 }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Sales -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+            <h3 class="font-bold text-gray-800 text-sm"><i class="fas fa-clock text-orange-500 mr-2"></i>Recent Sales</h3>
+            <a href="{% url 'broker_portal_sales' %}" class="text-orange-500 text-xs font-medium">View All →</a>
+        </div>
+        {% if recent_invoices %}
+        <div class="divide-y divide-gray-50">
+            {% for inv in recent_invoices %}
+            <div class="flex items-center justify-between px-5 py-3">
+                <div>
+                    <p class="font-semibold text-orange-600 text-sm">{{ inv.invoice_number }}</p>
+                    <p class="text-xs text-gray-400">{{ inv.customer.name }} · {{ inv.date|date:"d M Y" }}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-sm">Rs. {{ inv.grand_total|floatformat:0 }}</span>
+                    <a href="{% url 'broker_portal_sale_detail' inv.pk %}" class="text-orange-400 hover:text-orange-600 text-sm"><i class="fas fa-eye"></i></a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-10 text-gray-400 text-sm">
+            <i class="fas fa-file-invoice text-3xl mb-2 block opacity-30"></i>No sales yet.
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

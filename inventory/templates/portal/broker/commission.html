@@ -1,0 +1,76 @@
+{% extends 'portal/base.html' %}
+{% block title %}My Commission — BizManager{% endblock %}
+{% block page_title %}My Commission{% endblock %}
+{% block page_subtitle %}Commission earned from sales{% endblock %}
+
+{% block content %}
+
+<!-- Commission Summary -->
+<div class="grid grid-cols-3 gap-4 mb-6">
+    <div class="card-gradient-blue rounded-2xl p-4 text-white text-center">
+        <i class="fas fa-coins text-2xl opacity-80 mb-2 block"></i>
+        <p class="text-xs opacity-75">Total Earned</p>
+        <p class="text-xl font-bold">Rs. {{ total_earned|floatformat:0 }}</p>
+    </div>
+    <div class="card-gradient-green rounded-2xl p-4 text-white text-center">
+        <i class="fas fa-check-circle text-2xl opacity-80 mb-2 block"></i>
+        <p class="text-xs opacity-75">Paid</p>
+        <p class="text-xl font-bold">Rs. {{ total_paid|floatformat:0 }}</p>
+    </div>
+    <div class="card-gradient-red rounded-2xl p-4 text-white text-center">
+        <i class="fas fa-clock text-2xl opacity-80 mb-2 block"></i>
+        <p class="text-xs opacity-75">Pending</p>
+        <p class="text-xl font-bold">Rs. {{ total_pending|floatformat:0 }}</p>
+    </div>
+</div>
+
+<!-- Commission Table -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100">
+    {% if commissions %}
+    <div class="overflow-x-auto">
+        <table class="w-full data-table">
+            <thead>
+                <tr>
+                    <th class="text-left">Invoice</th>
+                    <th class="text-left">Customer</th>
+                    <th class="text-left">Date</th>
+                    <th class="text-right">Sale Amount</th>
+                    <th class="text-center">Rate</th>
+                    <th class="text-right">Commission</th>
+                    <th class="text-center">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in commissions %}
+                <tr>
+                    <td>
+                        <a href="{% url 'broker_portal_sale_detail' c.invoice.pk %}" class="text-orange-600 font-semibold text-sm hover:underline">
+                            {{ c.invoice.invoice_number }}
+                        </a>
+                    </td>
+                    <td class="text-sm">{{ c.invoice.customer.name }}</td>
+                    <td class="text-gray-500 text-sm">{{ c.invoice.date|date:"d M Y" }}</td>
+                    <td class="text-right text-sm font-semibold">Rs. {{ c.invoice.grand_total|floatformat:0 }}</td>
+                    <td class="text-center text-sm">{{ c.commission_rate }}%</td>
+                    <td class="text-right font-bold text-orange-600 text-sm">Rs. {{ c.commission_amount|floatformat:0 }}</td>
+                    <td class="text-center">
+                        {% if c.is_paid %}
+                        <span class="badge badge-paid text-xs">Paid</span>
+                        {% else %}
+                        <span class="badge badge-unpaid text-xs">Pending</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-16 text-gray-400">
+        <i class="fas fa-coins text-5xl mb-3 block opacity-20"></i>
+        <p class="font-medium">No commission records yet</p>
+        <p class="text-xs mt-1">Commission is generated automatically when invoices are created with your broker profile.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

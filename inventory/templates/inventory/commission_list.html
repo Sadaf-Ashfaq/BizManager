@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}Commission Management{% endblock %}
+{% block page_title %}Commission Management{% endblock %}
+{% block page_subtitle %}Broker commissions overview{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-3 gap-4 mb-6">
+    <div class="card-gradient-blue rounded-2xl p-4 text-white">
+        <p class="text-xs opacity-75">Total Earned</p>
+        <p class="text-xl font-bold">Rs. {{ total_earned|floatformat:0 }}</p>
+    </div>
+    <div class="card-gradient-green rounded-2xl p-4 text-white">
+        <p class="text-xs opacity-75">Total Paid</p>
+        <p class="text-xl font-bold">Rs. {{ total_paid|floatformat:0 }}</p>
+    </div>
+    <div class="card-gradient-red rounded-2xl p-4 text-white">
+        <p class="text-xs opacity-75">Pending</p>
+        <p class="text-xl font-bold">Rs. {{ total_pending|floatformat:0 }}</p>
+    </div>
+</div>
+<div class="bg-white rounded-2xl border border-gray-100 p-4 mb-5">
+    <form method="get" class="flex gap-3 items-end flex-wrap">
+        <div>
+            <label class="text-xs text-gray-500 block mb-1">Broker</label>
+            <select name="broker" class="form-input text-sm py-1.5">
+                <option value="">All Brokers</option>
+                {% for b in brokers %}
+                <option value="{{ b.id }}" {% if selected_broker == b.id|stringformat:'s' %}selected{% endif %}>{{ b.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="text-xs text-gray-500 block mb-1">Status</label>
+            <select name="paid" class="form-input text-sm py-1.5">
+                <option value="">All</option>
+                <option value="paid" {% if selected_paid == 'paid' %}selected{% endif %}>Paid</option>
+                <option value="unpaid" {% if selected_paid == 'unpaid' %}selected{% endif %}>Pending</option>
+            </select>
+        </div>
+        <button type="submit" class="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium">Filter</button>
+        <a href="{% url 'commission_list' %}" class="text-gray-500 text-sm">Clear</a>
+    </form>
+</div>
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100">
+    {% if commissions %}
+    <div class="overflow-x-auto">
+        <table class="w-full data-table">
+            <thead>
+                <tr>
+                    <th class="text-left">Invoice</th>
+                    <th class="text-left">Broker</th>
+                    <th class="text-left">Customer</th>
+                    <th class="text-right">Sale</th>
+                    <th class="text-center">Rate</th>
+                    <th class="text-right">Commission</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in commissions %}
+                <tr>
+                    <td class="font-semibold text-blue-600 text-sm">{{ c.invoice.invoice_number }}</td>
+                    <td class="text-sm font-medium">{{ c.broker.name }}</td>
+                    <td class="text-sm text-gray-600">{{ c.invoice.customer.name }}</td>
+                    <td class="text-right text-sm">Rs. {{ c.invoice.grand_total|floatformat:0 }}</td>
+                    <td class="text-center text-sm">{{ c.commission_rate }}%</td>
+                    <td class="text-right font-bold text-orange-600 text-sm">Rs. {{ c.commission_amount|floatformat:0 }}</td>
+                    <td class="text-center">
+                        {% if c.is_paid %}<span class="badge badge-paid text-xs">Paid</span>
+                        {% else %}<span class="badge badge-unpaid text-xs">Pending</span>{% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if not c.is_paid %}
+                        <a href="{% url 'commission_mark_paid' c.pk %}" class="text-green-600 hover:text-green-800 text-xs font-medium">
+                            <i class="fas fa-check mr-1"></i>Mark Paid
+                        </a>
+                        {% else %}
+                        <span class="text-gray-300 text-xs">{{ c.paid_date|date:"d M Y" }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-16 text-gray-400">
+        <i class="fas fa-coins text-5xl mb-3 block opacity-20"></i>
+        <p>No commission records found</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

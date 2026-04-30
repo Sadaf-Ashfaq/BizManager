@@ -1,0 +1,138 @@
+{% extends 'portal/base.html' %}
+{% block title %}My Dashboard — BizManager{% endblock %}
+{% block sidebar_bg %}bg-teal-900{% endblock %}
+{% block logo_bg %}bg-teal-500{% endblock %}
+{% block logo_icon %}fa-user{% endblock %}
+{% block portal_name %}Customer Portal{% endblock %}
+{% block avatar_bg %}bg-teal-600{% endblock %}
+{% block user_display_name %}{{ customer.name }}{% endblock %}
+{% block user_role_label %}Customer{% endblock %}
+
+{% block nav_links %}
+<a href="{% url 'customer_portal_dashboard' %}" class="portal-nav-link active">
+    <i class="fas fa-chart-pie w-5"></i> Dashboard
+</a>
+<a href="{% url 'customer_portal_invoices' %}" class="portal-nav-link">
+    <i class="fas fa-file-invoice w-5"></i> My Invoices
+</a>
+<a href="{% url 'customer_portal_payments' %}" class="portal-nav-link">
+    <i class="fas fa-money-bill-wave w-5"></i> My Payments
+</a>
+<a href="{% url 'customer_portal_outstanding' %}" class="portal-nav-link">
+    <i class="fas fa-exclamation-circle w-5"></i> Outstanding
+</a>
+<a href="{% url 'customer_portal_profile' %}" class="portal-nav-link">
+    <i class="fas fa-user-cog w-5"></i> My Profile
+</a>
+{% endblock %}
+
+{% block page_title %}My Dashboard{% endblock %}
+{% block page_subtitle %}Welcome back, {{ customer.name }}!{% endblock %}
+
+{% block content %}
+<!-- Summary Cards -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="card-gradient-purple rounded-2xl p-5 text-white shadow">
+        <p class="text-purple-100 text-xs font-medium mb-1">Total Invoices</p>
+        <p class="text-2xl font-bold">{{ total_invoices }}</p>
+    </div>
+    <div class="card-gradient-blue rounded-2xl p-5 text-white shadow">
+        <p class="text-blue-200 text-xs font-medium mb-1">Total Purchases</p>
+        <p class="text-2xl font-bold">Rs. {{ total_purchases|floatformat:0 }}</p>
+    </div>
+    <div class="card-gradient-green rounded-2xl p-5 text-white shadow">
+        <p class="text-green-100 text-xs font-medium mb-1">Total Paid</p>
+        <p class="text-2xl font-bold">Rs. {{ total_paid|floatformat:0 }}</p>
+    </div>
+    <div class="card-gradient-red rounded-2xl p-5 text-white shadow">
+        <p class="text-red-100 text-xs font-medium mb-1">Outstanding</p>
+        <p class="text-2xl font-bold">Rs. {{ outstanding|floatformat:0 }}</p>
+    </div>
+</div>
+
+<!-- Pending Alert -->
+{% if unpaid_invoices %}
+<div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-5 mb-6">
+    <h3 class="font-bold text-yellow-800 mb-3 flex items-center gap-2">
+        <i class="fas fa-exclamation-triangle text-yellow-500"></i>
+        Pending Payments
+    </h3>
+    <div class="space-y-2">
+        {% for inv in unpaid_invoices %}
+        <div class="bg-white rounded-xl border border-yellow-100 px-4 py-3 flex items-center justify-between">
+            <div>
+                <span class="font-semibold text-gray-800 text-sm">{{ inv.invoice_number }}</span>
+                <span class="text-gray-400 text-xs ml-2">{{ inv.date|date:"d M Y" }}</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="font-bold text-red-600 text-sm">Rs. {{ inv.balance_due|floatformat:0 }}</span>
+                <span class="badge {% if inv.payment_status == 'partial' %}badge-partial{% else %}badge-unpaid{% endif %}">
+                    {{ inv.get_payment_status_display }}
+                </span>
+                <a href="{% url 'customer_portal_invoice_detail' inv.pk %}" class="text-blue-500 hover:text-blue-700 text-sm">
+                    <i class="fas fa-eye"></i>
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Invoices -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <h3 class="font-bold text-gray-800">
+            <i class="fas fa-clock text-teal-500 mr-2"></i>Recent Invoices
+        </h3>
+        <a href="{% url 'customer_portal_invoices' %}" class="text-teal-600 text-sm font-medium">
+            View All <i class="fas fa-arrow-right ml-1"></i>
+        </a>
+    </div>
+    {% if recent_invoices %}
+    <div class="overflow-x-auto">
+        <table class="w-full data-table">
+            <thead>
+                <tr>
+                    <th>Invoice #</th>
+                    <th>Date</th>
+                    <th class="text-right">Total</th>
+                    <th class="text-right">Paid</th>
+                    <th class="text-right">Balance</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center">View</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inv in recent_invoices %}
+                <tr>
+                    <td class="font-semibold text-teal-600">{{ inv.invoice_number }}</td>
+                    <td class="text-gray-500 text-sm">{{ inv.date|date:"d M Y" }}</td>
+                    <td class="text-right font-semibold">Rs. {{ inv.grand_total|floatformat:0 }}</td>
+                    <td class="text-right text-green-600">Rs. {{ inv.amount_paid|floatformat:0 }}</td>
+                    <td class="text-right {% if inv.balance_due > 0 %}text-red-600 font-bold{% else %}text-green-600{% endif %}">
+                        Rs. {{ inv.balance_due|floatformat:0 }}
+                    </td>
+                    <td class="text-center">
+                        <span class="badge {% if inv.payment_status == 'paid' %}badge-paid{% elif inv.payment_status == 'partial' %}badge-partial{% else %}badge-unpaid{% endif %}">
+                            {{ inv.get_payment_status_display }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <a href="{% url 'customer_portal_invoice_detail' inv.pk %}" class="text-teal-500 hover:text-teal-700">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-12 text-gray-300">
+        <i class="fas fa-file-invoice text-4xl mb-3 block"></i>
+        <p class="text-sm">No invoices yet</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

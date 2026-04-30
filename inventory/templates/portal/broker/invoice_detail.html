@@ -1,0 +1,121 @@
+{% extends 'portal/base.html' %}
+{% block title %}Invoice {{ invoice.invoice_number }}{% endblock %}
+{% block sidebar_bg %}bg-orange-900{% endblock %}
+{% block logo_bg %}bg-orange-500{% endblock %}
+{% block logo_icon %}fa-handshake{% endblock %}
+{% block portal_name %}Broker Portal{% endblock %}
+{% block avatar_bg %}bg-orange-600{% endblock %}
+{% block user_display_name %}{{ broker.name }}{% endblock %}
+{% block user_role_label %}Broker{% endblock %}
+
+{% block nav_links %}
+<a href="{% url 'broker_portal_dashboard' %}" class="portal-nav-link"><i class="fas fa-chart-pie w-5"></i> Dashboard</a>
+<a href="{% url 'broker_portal_sales' %}" class="portal-nav-link active"><i class="fas fa-file-invoice w-5"></i> My Sales</a>
+<a href="{% url 'broker_portal_customers' %}" class="portal-nav-link"><i class="fas fa-users w-5"></i> My Customers</a>
+<a href="{% url 'broker_portal_commission' %}" class="portal-nav-link"><i class="fas fa-coins w-5"></i> Commission</a>
+<a href="{% url 'broker_portal_profile' %}" class="portal-nav-link"><i class="fas fa-user-cog w-5"></i> My Profile</a>
+{% endblock %}
+
+{% block page_title %}{{ invoice.invoice_number }}{% endblock %}
+{% block page_subtitle %}{{ invoice.date|date:"d M Y" }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-5">
+
+    <!-- Header Card -->
+    <div class="bg-gradient-to-r from-orange-800 to-orange-600 rounded-2xl p-6 text-white">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <h2 class="text-2xl font-bold">{{ invoice.invoice_number }}</h2>
+                <p class="text-orange-200 mt-1 text-sm">Date: {{ invoice.date|date:"d M Y" }}</p>
+                <p class="text-orange-200 text-sm">Customer: <strong>{{ invoice.customer.name }}</strong></p>
+            </div>
+            <span class="badge {% if invoice.payment_status == 'paid' %}badge-paid{% elif invoice.payment_status == 'partial' %}badge-partial{% else %}badge-unpaid{% endif %}">
+                {{ invoice.get_payment_status_display }}
+            </span>
+        </div>
+        <div class="grid grid-cols-2 gap-4 pt-4 border-t border-orange-700 text-center">
+            <div>
+                <p class="text-orange-300 text-xs mb-1">Invoice Total</p>
+                <p class="text-2xl font-bold">Rs. {{ invoice.grand_total|floatformat:0 }}</p>
+            </div>
+            {% if commission %}
+            <div>
+                <p class="text-orange-300 text-xs mb-1">Your Commission</p>
+                <p class="text-2xl font-bold text-yellow-300">Rs. {{ commission.commission_amount|floatformat:0 }}</p>
+                <p class="text-xs text-orange-200 mt-1">
+                    {% if commission.is_paid %}
+                    <i class="fas fa-check-circle text-green-400 mr-1"></i>Paid on {{ commission.paid_date|date:"d M Y" }}
+                    {% else %}
+                    <i class="fas fa-clock text-yellow-400 mr-1"></i>Pending
+                    {% endif %}
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Products Table -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100">
+            <h3 class="font-bold text-gray-800">
+                <i class="fas fa-box text-orange-500 mr-2"></i>Products Sold
+            </h3>
+        </div>
+        <table class="w-full data-table">
+            <thead>
+                <tr>
+                    <th class="text-left">Product</th>
+                    <th class="text-center">Unit</th>
+                    <th class="text-right">Qty</th>
+                    <th class="text-right">Price/Unit</th>
+                    <th class="text-right">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="font-semibold">{{ item.product.name }}</td>
+                    <td class="text-center">
+                        <span class="badge {% if item.product.unit == 'kg' %}badge-kg{% else %}badge-bag{% endif %}">
+                            {{ item.product.get_unit_display }}
+                        </span>
+                    </td>
+                    <td class="text-right">{{ item.quantity }}</td>
+                    <td class="text-right">Rs. {{ item.price_per_unit|floatformat:2 }}</td>
+                    <td class="text-right font-bold">Rs. {{ item.line_total|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="bg-gray-50 text-sm">
+                <tr>
+                    <td colspan="4" class="text-right text-gray-500 py-2 px-4">Subtotal</td>
+                    <td class="text-right font-semibold py-2 px-4">Rs. {{ invoice.subtotal|floatformat:2 }}</td>
+                </tr>
+                {% if invoice.loading_charges > 0 %}
+                <tr>
+                    <td colspan="4" class="text-right text-orange-500 py-1 px-4">Loading (Rs.10/bag)</td>
+                    <td class="text-right text-orange-500 font-semibold py-1 px-4">Rs. {{ invoice.loading_charges|floatformat:2 }}</td>
+                </tr>
+                {% endif %}
+                <tr class="border-t-2 border-orange-300">
+                    <td colspan="4" class="text-right font-bold text-orange-800 text-base py-3 px-4">Grand Total</td>
+                    <td class="text-right font-bold text-orange-800 text-base py-3 px-4">Rs. {{ invoice.grand_total|floatformat:2 }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    {% if invoice.notes %}
+    <div class="bg-gray-50 rounded-xl p-4 text-sm text-gray-600 border border-gray-100">
+        <span class="font-semibold">Notes:</span> {{ invoice.notes }}
+    </div>
+    {% endif %}
+
+    <a href="{% url 'broker_portal_sales' %}"
+       class="flex items-center gap-2 text-orange-600 hover:text-orange-800 font-medium text-sm">
+        <i class="fas fa-arrow-left"></i> Back to Sales
+    </a>
+
+</div>
+{% endblock %}

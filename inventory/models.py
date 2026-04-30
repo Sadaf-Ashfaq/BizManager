@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from django.db.models import Sum
+from django.contrib.auth.models import User
 
 
 class Product(models.Model):
@@ -22,7 +23,7 @@ class Product(models.Model):
         return f"{self.name} ({self.get_unit_display()})"
 
     def total_sold_kg(self):
-        items = self.invoiceitem_set.filter(invoice__status__in=['confirmed'])
+        items = self.invoiceitem_set.filter(invoice__status='confirmed')
         total = 0
         for item in items:
             if self.unit == 'kg':
@@ -36,6 +37,11 @@ class Product(models.Model):
 
 
 class Customer(models.Model):
+    user = models.OneToOneField(
+        User, on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='customer_profile'
+    )
     name = models.CharField(max_length=200)
     phone = models.CharField(max_length=20, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
@@ -47,35 +53,62 @@ class Customer(models.Model):
 
     def total_purchases(self):
         return self.invoice_set.filter(status='confirmed').aggregate(
-            total=Sum('grand_total')
-        )['total'] or 0
+            total=Sum('grand_total'))['total'] or 0
 
     def total_paid(self):
-        from django.db.models import Sum
         return self.invoice_set.filter(status='confirmed').aggregate(
-            total=Sum('amount_paid')
-        )['total'] or 0
+            total=Sum('amount_paid'))['total'] or 0
 
     def outstanding_balance(self):
-        return self.total_purchases() - self.total_paid()
+        return float(self.total_purchases()) - float(self.total_paid())
 
     class Meta:
         ordering = ['name']
 
 
 class Broker(models.Model):
+    user = models.OneToOneField(
+        User, on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='broker_profile'
+    )
     name = models.CharField(max_length=200)
     phone = models.CharField(max_length=20, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
     commission_rate = models.DecimalField(
         max_digits=5, decimal_places=2, default=0,
-        help_text="Commission percentage"
+        help_text="Default commission percentage per invoice"
     )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.name
+
+    def total_sales(self):
+        return self.invoice_set.filter(status='confirmed').aggregate(
+            total=Sum('grand_total'))['total'] or 0
+
+    def total_invoices(self):
+        return self.invoice_set.filter(status='confirmed').count()
+
+    def total_commission_earned(self):
+        return self.commissions.aggregate(
+            total=Sum('commission_amount'))['total'] or 0
+
+    def total_commission_paid(self):
+        return self.commissions.filter(is_paid=True).aggregate(
+            total=Sum('commission_amount'))['total'] or 0
+
+    def total_commission_pending(self):
+        return self.commissions.filter(is_paid=False).aggregate(
+            total=Sum('commission_amount'))['total'] or 0
+
+    def customers_handled(self):
+        return Customer.objects.filter(
+            invoice__broker=self,
+            invoice__status='confirmed'
+        ).distinct()
 
     class Meta:
         ordering = ['name']
@@ -120,19 +153,30 @@ class Invoice(models.Model):
         for item in self.invoiceitem_set.all():
             subtotal += float(item.line_total)
             if item.product.unit == 'bag':
-                loading_charges += float(item.quantity) * 10  # Rs 10 per bag
+                loading_charges += float(item.quantity) * 10
         self.subtotal = subtotal
         self.loading_charges = loading_charges
         self.grand_total = subtotal + loading_charges
-        self.balance_due = self.grand_total - self.amount_paid
+        self.balance_due = self.grand_total - float(self.amount_paid)
         self.save()
+        # Auto create commission if broker is set
+        if self.broker and self.broker.commission_rate > 0:
+            commission_amount = float(self.grand_total) * float(self.broker.commission_rate) / 100
+            BrokerCommission.objects.update_or_create(
+                invoice=self,
+                broker=self.broker,
+                defaults={
+                    'commission_rate': self.broker.commission_rate,
+                    'commission_amount': commission_amount,
+                    'is_paid': False,
+                }
+            )
 
     def update_payment_status(self):
-        if self.amount_paid <= 0:
+        if float(self.amount_paid) <= 0:
             self.payment_status = 'unpaid'
-        elif self.amount_paid >= self.grand_total:
+        elif float(self.amount_paid) >= float(self.grand_total):
             self.payment_status = 'paid'
-            self.balance_due = 0
         else:
             self.payment_status = 'partial'
         self.balance_due = max(0, float(self.grand_total) - float(self.amount_paid))
@@ -182,7 +226,6 @@ class Payment(models.Model):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        # Update invoice amount paid
         invoice = self.invoice
         total_paid = invoice.payments.aggregate(total=Sum('amount'))['total'] or 0
         invoice.amount_paid = total_paid
@@ -200,7 +243,24 @@ class StockEntry(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.product.name} - {self.quantity} added on {self.date}"
+        return f"{self.product.name} - {self.quantity} on {self.date}"
 
     class Meta:
         ordering = ['-date']
+
+
+class BrokerCommission(models.Model):
+    broker = models.ForeignKey(Broker, on_delete=models.CASCADE, related_name='commissions')
+    invoice = models.OneToOneField(Invoice, on_delete=models.CASCADE, related_name='commission')
+    commission_rate = models.DecimalField(max_digits=5, decimal_places=2)
+    commission_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    is_paid = models.BooleanField(default=False)
+    paid_date = models.DateField(null=True, blank=True)
+    note = models.CharField(max_length=255, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Commission: {self.broker.name} — {self.invoice.invoice_number} — Rs.{self.commission_amount}"
+
+    class Meta:
+        ordering = ['-created_at']

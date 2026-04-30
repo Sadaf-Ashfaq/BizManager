@@ -1,0 +1,84 @@
+{% extends 'portal/base.html' %}
+{% block title %}Outstanding Balance — BizManager{% endblock %}
+{% block sidebar_bg %}bg-teal-900{% endblock %}
+{% block logo_bg %}bg-teal-500{% endblock %}
+{% block logo_icon %}fa-user{% endblock %}
+{% block portal_name %}Customer Portal{% endblock %}
+{% block avatar_bg %}bg-teal-600{% endblock %}
+{% block user_display_name %}{{ customer.name }}{% endblock %}
+{% block user_role_label %}Customer{% endblock %}
+
+{% block nav_links %}
+<a href="{% url 'customer_portal_dashboard' %}" class="portal-nav-link">
+    <i class="fas fa-chart-pie w-5"></i> Dashboard
+</a>
+<a href="{% url 'customer_portal_invoices' %}" class="portal-nav-link">
+    <i class="fas fa-file-invoice w-5"></i> My Invoices
+</a>
+<a href="{% url 'customer_portal_payments' %}" class="portal-nav-link">
+    <i class="fas fa-money-bill-wave w-5"></i> My Payments
+</a>
+<a href="{% url 'customer_portal_outstanding' %}" class="portal-nav-link active">
+    <i class="fas fa-exclamation-circle w-5"></i> Outstanding
+</a>
+<a href="{% url 'customer_portal_profile' %}" class="portal-nav-link">
+    <i class="fas fa-user-cog w-5"></i> My Profile
+</a>
+{% endblock %}
+
+{% block page_title %}Outstanding Balance{% endblock %}
+{% block page_subtitle %}Unpaid and partially paid invoices{% endblock %}
+
+{% block content %}
+<div class="card-gradient-red rounded-2xl p-6 text-white mb-6 shadow">
+    <p class="text-red-100 text-sm mb-1">Total Outstanding</p>
+    <p class="text-4xl font-bold">Rs. {{ total_outstanding|floatformat:0 }}</p>
+    <p class="text-red-200 text-sm mt-2">{{ unpaid_invoices|length }} invoice(s) pending</p>
+</div>
+
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100">
+    {% if unpaid_invoices %}
+    <div class="overflow-x-auto">
+        <table class="w-full data-table">
+            <thead>
+                <tr>
+                    <th>Invoice #</th>
+                    <th>Date</th>
+                    <th class="text-right">Total</th>
+                    <th class="text-right">Paid</th>
+                    <th class="text-right">Balance Due</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center">View</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inv in unpaid_invoices %}
+                <tr>
+                    <td class="font-semibold text-teal-600">{{ inv.invoice_number }}</td>
+                    <td class="text-gray-500 text-sm">{{ inv.date|date:"d M Y" }}</td>
+                    <td class="text-right">Rs. {{ inv.grand_total|floatformat:0 }}</td>
+                    <td class="text-right text-green-600">Rs. {{ inv.amount_paid|floatformat:0 }}</td>
+                    <td class="text-right font-bold text-red-600">Rs. {{ inv.balance_due|floatformat:0 }}</td>
+                    <td class="text-center">
+                        <span class="badge {% if inv.payment_status == 'partial' %}badge-partial{% else %}badge-unpaid{% endif %}">
+                            {{ inv.get_payment_status_display }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <a href="{% url 'customer_portal_invoice_detail' inv.pk %}" class="text-teal-500 hover:text-teal-700">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-16">
+        <i class="fas fa-check-circle text-5xl mb-4 block text-green-400"></i>
+        <p class="text-green-600 font-semibold text-lg">All clear! No outstanding balance.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

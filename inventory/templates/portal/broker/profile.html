@@ -1,0 +1,64 @@
+{% extends 'portal/base.html' %}
+{% block title %}My Profile — BizManager{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+{% block page_subtitle %}Your broker account{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto space-y-5">
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center gap-4 mb-6">
+            <div class="w-16 h-16 card-gradient-orange rounded-2xl flex items-center justify-center text-white text-2xl font-bold">
+                {{ broker.name|first|upper }}
+            </div>
+            <div>
+                <h2 class="text-xl font-bold text-gray-800">{{ broker.name }}</h2>
+                <p class="text-sm text-gray-400">Broker since {{ broker.created_at|date:"M Y" }}</p>
+                <p class="text-xs text-gray-400">Username: {{ request.user.username }}</p>
+            </div>
+        </div>
+
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
+                <input type="text" value="{{ broker.name }}" class="form-input bg-gray-50 cursor-not-allowed" disabled>
+                <p class="text-xs text-gray-400 mt-1">Name can only be changed by admin.</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Phone Number</label>
+                <input type="text" name="phone" value="{{ broker.phone|default:'' }}" class="form-input" placeholder="03xx-xxxxxxx">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Address</label>
+                <textarea name="address" class="form-input" rows="3">{{ broker.address|default:'' }}</textarea>
+            </div>
+            <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-semibold transition-colors">
+                <i class="fas fa-save mr-2"></i>Update Profile
+            </button>
+        </form>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+        <h3 class="font-bold text-gray-700 mb-3 text-sm">My Performance</h3>
+        <div class="space-y-2 text-sm">
+            <div class="flex justify-between py-2 border-b border-gray-50">
+                <span class="text-gray-500">Total Sales</span>
+                <span class="font-bold text-blue-700">Rs. {{ broker.total_sales|floatformat:0 }}</span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-gray-50">
+                <span class="text-gray-500">Total Invoices</span>
+                <span class="font-bold">{{ broker.total_invoices }}</span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-gray-50">
+                <span class="text-gray-500">Commission Rate</span>
+                <span class="font-bold text-orange-600">{{ broker.commission_rate }}%</span>
+            </div>
+            <div class="flex justify-between py-2">
+                <span class="text-gray-500">Commission Pending</span>
+                <span class="font-bold text-red-600">Rs. {{ broker.total_commission_pending|floatformat:0 }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

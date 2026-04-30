@@ -1,0 +1,87 @@
+{% extends 'portal/base.html' %}
+{% block title %}My Invoices — BizManager{% endblock %}
+{% block sidebar_bg %}bg-teal-900{% endblock %}
+{% block logo_bg %}bg-teal-500{% endblock %}
+{% block logo_icon %}fa-user{% endblock %}
+{% block portal_name %}Customer Portal{% endblock %}
+{% block avatar_bg %}bg-teal-600{% endblock %}
+{% block user_display_name %}{{ customer.name }}{% endblock %}
+{% block user_role_label %}Customer{% endblock %}
+
+{% block nav_links %}
+<a href="{% url 'customer_portal_dashboard' %}" class="portal-nav-link">
+    <i class="fas fa-chart-pie w-5"></i> Dashboard
+</a>
+<a href="{% url 'customer_portal_invoices' %}" class="portal-nav-link active">
+    <i class="fas fa-file-invoice w-5"></i> My Invoices
+</a>
+<a href="{% url 'customer_portal_payments' %}" class="portal-nav-link">
+    <i class="fas fa-money-bill-wave w-5"></i> My Payments
+</a>
+<a href="{% url 'customer_portal_outstanding' %}" class="portal-nav-link">
+    <i class="fas fa-exclamation-circle w-5"></i> Outstanding
+</a>
+<a href="{% url 'customer_portal_profile' %}" class="portal-nav-link">
+    <i class="fas fa-user-cog w-5"></i> My Profile
+</a>
+{% endblock %}
+
+{% block page_title %}My Invoices{% endblock %}
+{% block page_subtitle %}All your purchase records{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-2xl border border-gray-100 p-4 mb-5 flex flex-wrap gap-2">
+    <a href="?status=" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if not selected_status %}bg-teal-600 text-white{% else %}bg-gray-100 text-gray-600{% endif %}">All</a>
+    <a href="?status=paid" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if selected_status == 'paid' %}bg-green-600 text-white{% else %}bg-gray-100 text-gray-600{% endif %}">Paid</a>
+    <a href="?status=partial" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if selected_status == 'partial' %}bg-yellow-500 text-white{% else %}bg-gray-100 text-gray-600{% endif %}">Partial</a>
+    <a href="?status=unpaid" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if selected_status == 'unpaid' %}bg-red-600 text-white{% else %}bg-gray-100 text-gray-600{% endif %}">Unpaid</a>
+</div>
+
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100">
+    {% if invoices %}
+    <div class="overflow-x-auto">
+        <table class="w-full data-table">
+            <thead>
+                <tr>
+                    <th>Invoice #</th>
+                    <th>Date</th>
+                    <th class="text-right">Total</th>
+                    <th class="text-right">Paid</th>
+                    <th class="text-right">Balance Due</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center">View</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inv in invoices %}
+                <tr>
+                    <td class="font-semibold text-teal-600">{{ inv.invoice_number }}</td>
+                    <td class="text-gray-500 text-sm">{{ inv.date|date:"d M Y" }}</td>
+                    <td class="text-right font-semibold">Rs. {{ inv.grand_total|floatformat:0 }}</td>
+                    <td class="text-right text-green-600 font-medium">Rs. {{ inv.amount_paid|floatformat:0 }}</td>
+                    <td class="text-right {% if inv.balance_due > 0 %}text-red-600 font-bold{% else %}text-green-600{% endif %}">
+                        Rs. {{ inv.balance_due|floatformat:0 }}
+                    </td>
+                    <td class="text-center">
+                        <span class="badge {% if inv.payment_status == 'paid' %}badge-paid{% elif inv.payment_status == 'partial' %}badge-partial{% else %}badge-unpaid{% endif %}">
+                            {{ inv.get_payment_status_display }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <a href="{% url 'customer_portal_invoice_detail' inv.pk %}" class="text-teal-500 hover:text-teal-700 text-sm font-medium">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-16 text-gray-300">
+        <i class="fas fa-file-invoice text-5xl mb-4 block"></i>
+        <p>No invoices found</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

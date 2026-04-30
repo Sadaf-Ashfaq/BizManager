@@ -1,0 +1,162 @@
+{% extends 'portal/base.html' %}
+{% block title %}Invoice {{ invoice.invoice_number }}{% endblock %}
+{% block sidebar_bg %}bg-teal-900{% endblock %}
+{% block logo_bg %}bg-teal-500{% endblock %}
+{% block logo_icon %}fa-user{% endblock %}
+{% block portal_name %}Customer Portal{% endblock %}
+{% block avatar_bg %}bg-teal-600{% endblock %}
+{% block user_display_name %}{{ customer.name }}{% endblock %}
+{% block user_role_label %}Customer{% endblock %}
+
+{% block nav_links %}
+<a href="{% url 'customer_portal_dashboard' %}" class="portal-nav-link">
+    <i class="fas fa-chart-pie w-5"></i> Dashboard
+</a>
+<a href="{% url 'customer_portal_invoices' %}" class="portal-nav-link active">
+    <i class="fas fa-file-invoice w-5"></i> My Invoices
+</a>
+<a href="{% url 'customer_portal_payments' %}" class="portal-nav-link">
+    <i class="fas fa-money-bill-wave w-5"></i> My Payments
+</a>
+<a href="{% url 'customer_portal_outstanding' %}" class="portal-nav-link">
+    <i class="fas fa-exclamation-circle w-5"></i> Outstanding
+</a>
+<a href="{% url 'customer_portal_profile' %}" class="portal-nav-link">
+    <i class="fas fa-user-cog w-5"></i> My Profile
+</a>
+{% endblock %}
+
+{% block page_title %}{{ invoice.invoice_number }}{% endblock %}
+{% block page_subtitle %}{{ invoice.date|date:"d M Y" }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-5">
+
+    <div class="bg-gradient-to-r from-teal-800 to-teal-600 rounded-2xl p-6 text-white">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <h2 class="text-2xl font-bold">{{ invoice.invoice_number }}</h2>
+                <p class="text-teal-200 mt-1 text-sm">Date: {{ invoice.date|date:"d M Y" }}</p>
+                {% if invoice.broker %}
+                <p class="text-teal-200 text-sm">Broker: {{ invoice.broker.name }}</p>
+                {% endif %}
+            </div>
+            <span class="badge text-sm px-4 py-2
+                {% if invoice.payment_status == 'paid' %}badge-paid
+                {% elif invoice.payment_status == 'partial' %}badge-partial
+                {% else %}badge-unpaid{% endif %}">
+                {{ invoice.get_payment_status_display }}
+            </span>
+        </div>
+        <div class="grid grid-cols-3 gap-4 pt-4 border-t border-teal-700 text-center">
+            <div>
+                <p class="text-teal-300 text-xs mb-1">Grand Total</p>
+                <p class="text-xl font-bold">Rs. {{ invoice.grand_total|floatformat:0 }}</p>
+            </div>
+            <div>
+                <p class="text-teal-300 text-xs mb-1">Amount Paid</p>
+                <p class="text-xl font-bold text-green-300">Rs. {{ invoice.amount_paid|floatformat:0 }}</p>
+            </div>
+            <div>
+                <p class="text-teal-300 text-xs mb-1">Balance Due</p>
+                <p class="text-xl font-bold {% if invoice.balance_due > 0 %}text-red-300{% else %}text-green-300{% endif %}">
+                    Rs. {{ invoice.balance_due|floatformat:0 }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100">
+            <h3 class="font-bold text-gray-800">
+                <i class="fas fa-box text-teal-500 mr-2"></i>Products
+            </h3>
+        </div>
+        <table class="w-full data-table">
+            <thead>
+                <tr>
+                    <th class="text-left">Product</th>
+                    <th class="text-center">Unit</th>
+                    <th class="text-right">Qty</th>
+                    <th class="text-right">Price/Unit</th>
+                    <th class="text-right">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="font-semibold">{{ item.product.name }}</td>
+                    <td class="text-center">
+                        <span class="badge {% if item.product.unit == 'kg' %}badge-kg{% else %}badge-bag{% endif %}">
+                            {{ item.product.get_unit_display }}
+                        </span>
+                    </td>
+                    <td class="text-right">{{ item.quantity }}</td>
+                    <td class="text-right">Rs. {{ item.price_per_unit|floatformat:2 }}</td>
+                    <td class="text-right font-bold">Rs. {{ item.line_total|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="bg-gray-50 text-sm">
+                <tr>
+                    <td colspan="4" class="text-right text-gray-500 py-2 px-4">Subtotal</td>
+                    <td class="text-right font-semibold py-2 px-4">Rs. {{ invoice.subtotal|floatformat:2 }}</td>
+                </tr>
+                {% if invoice.loading_charges > 0 %}
+                <tr>
+                    <td colspan="4" class="text-right text-orange-500 py-1 px-4">Loading (Rs.10/bag)</td>
+                    <td class="text-right text-orange-500 font-semibold py-1 px-4">Rs. {{ invoice.loading_charges|floatformat:2 }}</td>
+                </tr>
+                {% endif %}
+                <tr class="border-t-2 border-teal-300">
+                    <td colspan="4" class="text-right font-bold text-teal-800 text-base py-3 px-4">Grand Total</td>
+                    <td class="text-right font-bold text-teal-800 text-base py-3 px-4">Rs. {{ invoice.grand_total|floatformat:2 }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    {% if invoice.notes %}
+    <div class="bg-gray-50 rounded-xl p-4 text-sm text-gray-600 border border-gray-100">
+        <span class="font-semibold">Notes:</span> {{ invoice.notes }}
+    </div>
+    {% endif %}
+
+    {% if payments %}
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100">
+            <h3 class="font-bold text-gray-800">
+                <i class="fas fa-history text-green-500 mr-2"></i>Payment History
+            </h3>
+        </div>
+        <table class="w-full data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th class="text-right">Amount</th>
+                    <th>Note</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in payments %}
+                <tr>
+                    <td class="text-gray-500">{{ p.date|date:"d M Y" }}</td>
+                    <td class="text-right font-bold text-green-600">Rs. {{ p.amount|floatformat:0 }}</td>
+                    <td class="text-gray-400">{{ p.note|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <div class="flex items-center gap-4">
+        <a href="{% url 'customer_portal_invoices' %}" class="text-teal-600 hover:text-teal-800 font-medium text-sm flex items-center gap-2">
+            <i class="fas fa-arrow-left"></i> Back to Invoices
+        </a>
+        <button onclick="window.print()" class="text-gray-500 hover:text-gray-700 font-medium text-sm flex items-center gap-2">
+            <i class="fas fa-print"></i> Print
+        </button>
+    </div>
+</div>
+{% endblock %}

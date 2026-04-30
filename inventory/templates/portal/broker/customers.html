@@ -1,0 +1,41 @@
+{% extends 'portal/base.html' %}
+{% block title %}My Customers — BizManager{% endblock %}
+{% block page_title %}My Customers{% endblock %}
+{% block page_subtitle %}Customers you have handled{% endblock %}
+
+{% block content %}
+{% if customer_data %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% for cd in customer_data %}
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 card-gradient-orange rounded-xl flex items-center justify-center text-white font-bold text-sm">
+                {{ cd.customer.name|first|upper }}
+            </div>
+            <div>
+                <p class="font-bold text-gray-800">{{ cd.customer.name }}</p>
+                {% if cd.customer.phone %}
+                <p class="text-xs text-gray-400">{{ cd.customer.phone }}</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-center text-sm">
+            <div class="bg-orange-50 rounded-lg p-2">
+                <p class="text-xs text-gray-400">Invoices</p>
+                <p class="font-bold text-orange-600">{{ cd.total_invoices }}</p>
+            </div>
+            <div class="bg-blue-50 rounded-lg p-2">
+                <p class="text-xs text-gray-400">Total Sales</p>
+                <p class="font-bold text-blue-600 text-xs">Rs. {{ cd.total_amount|floatformat:0 }}</p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="bg-white rounded-2xl border border-gray-100 text-center py-16 text-gray-400">
+    <i class="fas fa-users text-5xl mb-3 block opacity-20"></i>
+    <p class="font-medium">No customers handled yet</p>
+</div>
+{% endif %}
+{% endblock %}

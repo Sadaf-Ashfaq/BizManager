@@ -175,6 +175,13 @@
                 <span>Reports</span>
             </a>
 
+            <!-- Commission -->
+            <a href="{% url 'commission_list' %}"
+               class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-primary-200 hover:bg-primary-700 hover:text-white transition-all {% if 'commission' in request.resolver_match.url_name %}bg-primary-700 text-white{% endif %}">
+                <i class="fas fa-coins w-5 text-center"></i>
+                <span>Commissions</span>
+            </a>
+
         </nav>
 
         <!-- User Info at Bottom -->

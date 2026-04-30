@@ -1,0 +1,86 @@
+{% extends 'portal/base.html' %}
+{% block title %}My Profile — BizManager{% endblock %}
+{% block sidebar_bg %}bg-teal-900{% endblock %}
+{% block logo_bg %}bg-teal-500{% endblock %}
+{% block logo_icon %}fa-user{% endblock %}
+{% block portal_name %}Customer Portal{% endblock %}
+{% block avatar_bg %}bg-teal-600{% endblock %}
+{% block user_display_name %}{{ customer.name }}{% endblock %}
+{% block user_role_label %}Customer{% endblock %}
+
+{% block nav_links %}
+<a href="{% url 'customer_portal_dashboard' %}" class="portal-nav-link">
+    <i class="fas fa-chart-pie w-5"></i> Dashboard
+</a>
+<a href="{% url 'customer_portal_invoices' %}" class="portal-nav-link">
+    <i class="fas fa-file-invoice w-5"></i> My Invoices
+</a>
+<a href="{% url 'customer_portal_payments' %}" class="portal-nav-link">
+    <i class="fas fa-money-bill-wave w-5"></i> My Payments
+</a>
+<a href="{% url 'customer_portal_outstanding' %}" class="portal-nav-link">
+    <i class="fas fa-exclamation-circle w-5"></i> Outstanding
+</a>
+<a href="{% url 'customer_portal_profile' %}" class="portal-nav-link active">
+    <i class="fas fa-user-cog w-5"></i> My Profile
+</a>
+{% endblock %}
+
+{% block page_title %}My Profile{% endblock %}
+{% block page_subtitle %}View and update your information{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+
+        <div class="flex items-center gap-4 mb-6 pb-6 border-b border-gray-100">
+            <div class="w-16 h-16 bg-teal-100 rounded-2xl flex items-center justify-center text-2xl font-bold text-teal-700">
+                {{ customer.name|first|upper }}
+            </div>
+            <div>
+                <h2 class="text-xl font-bold text-gray-800">{{ customer.name }}</h2>
+                <p class="text-sm text-gray-400">Member since {{ customer.created_at|date:"M Y" }}</p>
+                <p class="text-sm text-gray-500 mt-1">
+                    <i class="fas fa-user text-teal-500 mr-1"></i>{{ request.user.username }}
+                </p>
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
+                    <input type="text" value="{{ customer.name }}"
+                           class="form-input bg-gray-50 cursor-not-allowed" readonly>
+                    <p class="text-xs text-gray-400 mt-1">Contact admin to change name</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Phone Number</label>
+                    <input type="text" name="phone"
+                           value="{{ customer.phone|default:'' }}"
+                           class="form-input" placeholder="03xx-xxxxxxx">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Address</label>
+                    <textarea name="address" rows="3"
+                              class="form-input" placeholder="Your address">{{ customer.address|default:'' }}</textarea>
+                </div>
+                <div class="border-t border-gray-100 pt-4">
+                    <h3 class="font-semibold text-gray-700 mb-3 text-sm">
+                        <i class="fas fa-lock text-teal-500 mr-2"></i>Change Password (Optional)
+                    </h3>
+                    <input type="password" name="new_password"
+                           class="form-input"
+                           placeholder="Leave blank to keep current password"
+                           autocomplete="new-password">
+                </div>
+                <button type="submit"
+                        class="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-xl font-bold transition-colors">
+                    <i class="fas fa-save mr-2"></i>Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
